@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clab 研究助理報帳指南</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;background:#F5F5F5;color:#1A1A1A;height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid #E5E5E5;flex-shrink:0}
+.topbar-row1{padding:10px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F0F0F0}
+/* Word-style ribbon */
+.ribbon-scroll{overflow-x:auto;overflow-y:visible;background:#F8F8F8;border-bottom:1px solid #E0E0E0}
+.ribbon{padding:4px 12px;display:flex;align-items:center;gap:2px;min-height:36px;flex-wrap:nowrap;overflow:visible;position:relative}
+.ribbon.ribbon-disabled .rb-btn,.ribbon.ribbon-disabled .rb-select,.ribbon.ribbon-disabled .rb-color-btn{opacity:.35;pointer-events:none;cursor:default}
+.rb-sep{width:1px;height:22px;background:#D5D5D5;margin:0 4px;flex-shrink:0}
+.rb-group{display:flex;align-items:center;gap:1px}
+.rb-btn{background:none;border:1px solid transparent;border-radius:4px;padding:3px 6px;font-size:13px;font-family:inherit;color:#222;cursor:pointer;line-height:1;transition:background .1s,border-color .1s;display:flex;align-items:center;justify-content:center;min-width:28px;height:26px}
+.rb-btn:hover{background:#E8E8E8;border-color:#CCC}
+.rb-btn.active{background:#D4E8FF;border-color:#90BFEF;color:#0055AA}
+.rb-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0}
+.rb-select{background:#fff;border:1px solid #CCC;border-radius:4px;padding:2px 4px;font-size:12px;font-family:inherit;color:#222;cursor:pointer;height:26px;outline:none}
+.rb-select:hover{border-color:#999}
+/* Color picker popup */
+.rb-color-wrap{position:relative}
+.rb-color-btn{background:none;border:1px solid transparent;border-radius:4px;padding:2px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;height:26px;justify-content:center;min-width:28px}
+.rb-color-btn:hover{background:#E8E8E8;border-color:#CCC}
+.rb-color-btn .cb-icon{font-size:12px;font-weight:700;line-height:1}
+.rb-color-btn .cb-swatch{height:3px;width:18px;border-radius:1px}
+.rb-color-popup{display:none;position:fixed;background:#fff;border:1px solid #CCC;border-radius:8px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;width:168px}
+.rb-color-popup.open{display:block}
+.cp-label{font-size:11px;color:#888;margin-bottom:5px;font-weight:500}
+.cp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cp-swatch{width:20px;height:20px;border-radius:4px;border:1px solid rgba(0,0,0,.12);cursor:pointer;transition:transform .1s}
+.cp-swatch:hover{transform:scale(1.2);border-color:#555}
+.cp-custom{display:flex;align-items:center;gap:6px;margin-top:4px}
+.cp-custom input[type=color]{width:28px;height:22px;border:1px solid #CCC;border-radius:3px;padding:1px;cursor:pointer;background:none}
+.cp-custom span{font-size:11px;color:#555}
+.logo{font-size:15px;font-weight:600;letter-spacing:.04em;color:#1A1A1A;display:flex;align-items:center;gap:7px}
+.logo span{color:#EF9F27}
+.badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#FFF3DC;color:#BA7517;font-weight:500}
+.layout{display:flex;flex:1;overflow:hidden}
+/* TOC */
+.toc{width:220px;flex-shrink:0;background:#fff;border-right:1px solid #E5E5E5;overflow-y:auto;padding:10px 0}
+.toc-header{font-size:14px;font-weight:700;padding:9px 12px 7px;letter-spacing:.01em;margin-top:4px;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;border-radius:6px;transition:background .12s}
+.toc-header:hover{background:rgba(0,0,0,.04)}
+.toc-header.grp-collapsed .toc-chevron{transform:rotate(-90deg)}
+.toc-chevron{font-size:10px;transition:transform .2s;flex-shrink:0;opacity:.6;margin-left:4px}
+/* 四個群組各自顏色 */
+.toc-header.grp-base{color:#6B7280;border-top:2px solid #E5E5E5;margin-top:8px}
+.toc-header.grp-base:first-child{border-top:none;margin-top:0}
+.toc-header.grp-acc{color:#1D6FA4;border-top:2px solid #BFDBF7;margin-top:8px}
+.toc-header.grp-sys{color:#6D4C41;border-top:2px solid #D7C4BB;margin-top:8px}
+.toc-header.grp-report{color:#2E7D5B;border-top:2px solid #B7DDD0;margin-top:8px}
+/* Collapsed group items hidden */
+.toc-item-wrap.grp-hidden{display:none}
+.toc-item{display:block;padding:6px 16px;font-size:14px;color:#444;cursor:pointer;border-left:3px solid transparent;line-height:1.5;transition:all .1s;text-decoration:none}
+.toc-item:hover{color:#1A1A1A;background:#F5F5F5}
+.toc-item.active{font-weight:700;border-left-color:#EF9F27;background:#FFFBF5;color:#BA7517}
+/* 子項目：縮排，保持可讀字級 */
+.toc-item.sub{padding-left:26px;font-size:13px;color:#555}
+.toc-item.sub:hover{color:#1A1A1A;background:#F5F5F5}
+/* 頂層項目粗體 */
+.toc-item.top{font-weight:700;font-size:14px;color:#1A1A1A}
+/* 群組顏色—grp-acc 底下項目 */
+.grp-acc + .toc-item,.grp-acc ~ .toc-item.sub{color:#1D6FA4}
+.grp-acc ~ .toc-item.sub:hover{color:#0D4F80;background:#EAF3FC}
+.grp-acc ~ .toc-item.sub.active{color:#1D6FA4;border-left-color:#378ADD;background:#DCF0FF;font-weight:700}
+/* 群組顏色—grp-sys 底下項目 */
+.grp-sys ~ .toc-item.sub{color:#6D4C41}
+.grp-sys ~ .toc-item.sub:hover{color:#4E342E;background:#F5EDE9}
+.grp-sys ~ .toc-item.sub.active{color:#6D4C41;border-left-color:#A1887F;background:#F5EDE9;font-weight:700}
+/* 群組顏色—grp-report 底下項目 */
+.grp-report ~ .toc-item{color:#2E7D5B}
+.grp-report ~ .toc-item:hover{color:#1B5E3F;background:#E5F5EE}
+.grp-report ~ .toc-item.active{color:#2E7D5B;border-left-color:#4CAF89;background:#E5F5EE;font-weight:700}
+/* Body */
+.guide-body{flex:1;overflow-y:auto;padding:24px 32px;max-width:800px}
+.section{margin-bottom:36px;scroll-margin-top:20px}
+.section-title{font-size:17px;font-weight:600;color:#1A1A1A;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;gap:8px}
+.section-title .icon{font-size:18px}
+h3{font-size:15px;font-weight:600;color:#1A1A1A;margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+p{font-size:15px;color:#333;line-height:1.8;margin-bottom:8px}
+ul,ol{padding-left:20px;margin-bottom:10px}
+li{font-size:15px;color:#333;line-height:1.8;margin-bottom:3px}
+a{color:#378ADD;word-break:break-all}
+a:hover{text-decoration:underline}
+/* Boxes */
+.tip{background:#E6F1FB;border:1px solid #B8D4F0;border-radius:8px;padding:10px 14px;font-size:15px;color:#185FA5;margin:10px 0;display:flex;gap:8px;align-items:flex-start}
+.warn{background:#FFF3DC;border:1px solid #F5D89A;border-radius:8px;padding:10px 14px;font-size:15px;color:#BA7517;margin:10px 0;display:flex;gap:8px;align-items:flex-start}
+.alert{background:#FCF0F0;border:1px solid #F0BABA;border-radius:8px;padding:10px 14px;font-size:15px;color:#A32D2D;margin:10px 0;display:flex;gap:8px;align-items:flex-start}
+.tip i,.warn i,.alert i{flex-shrink:0;margin-top:1px;font-size:15px}
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.step{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:11px 14px;display:flex;gap:13px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:#EF9F27;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-title{font-size:15px;font-weight:600;color:#1A1A1A;margin-bottom:5px}
+.step-desc{font-size:15px;color:#555;line-height:1.7}
+.step-desc a{color:#378ADD}
+/* Checklist */
+.checklist{list-style:none;padding:0;margin:8px 0}
+.checklist li{display:flex;align-items:flex-start;gap:8px;font-size:15px;color:#333;padding:4px 0;line-height:1.7}
+.checklist li::before{content:'☐';color:#EF9F27;flex-shrink:0;font-size:16px;line-height:1.2;margin-top:-1px}
+/* Table */
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:15px}
+th{background:#F5F5F5;padding:8px 12px;text-align:left;font-weight:600;color:#1A1A1A;border:1px solid #E5E5E5}
+td{padding:8px 12px;border:1px solid #E5E5E5;color:#333;line-height:1.6}
+tr:nth-child(even) td{background:#FAFAFA}
+/* Sys card */
+.sys{background:#F9F9F9;border:1px solid #E5E5E5;border-radius:8px;padding:12px 14px;margin-bottom:9px}
+.sys-name{font-size:15px;font-weight:600;color:#1A1A1A;margin-bottom:5px}
+.sys-row{font-size:15px;color:#666;margin-bottom:3px}
+.sys-row span{color:#1A1A1A}
+/* TOC edit mode */
+.toc-edit-bar{padding:6px 10px;border-top:1px solid #E5E5E5;display:flex;gap:6px;flex-wrap:wrap}
+.toc-edit-btn{font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid #D5D5D5;background:#fff;color:#444;cursor:pointer;font-family:inherit}
+.toc-edit-btn:hover{background:#F0F0F0}
+.toc-edit-btn.active-mode{background:#EF9F27;color:#fff;border-color:#EF9F27}
+/* Each TOC item in edit mode gets action buttons */
+.toc-item-wrap{position:relative;display:flex;align-items:center}
+.toc-item-wrap .toc-item{flex:1;min-width:0}
+.toc-item-actions{display:none;gap:2px;padding-right:4px;flex-shrink:0}
+.toc-editing .toc-item-actions{display:flex}
+.toc-item-act{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;border-radius:4px;color:#888;line-height:1}
+.toc-item-act:hover{background:#F0F0F0;color:#333}
+.toc-item-act.del{color:#E53E3E}
+.toc-item-act.del:hover{background:#FCE8E8}
+/* Inline rename input */
+.toc-rename-input{flex:1;font-size:13px;font-family:inherit;border:1px solid #90BFEF;border-radius:4px;padding:3px 6px;outline:none;background:#EEF6FF;min-width:0}
+/* Header edit: editable text */
+.toc-header{display:flex;align-items:center;justify-content:space-between}
+.toc-header[contenteditable="true"]{outline:2px dashed #EF9F2799;border-radius:3px;background:#FFFDF5;cursor:text}
+.toc-header-del{display:none;background:none;border:none;color:#E53E3E;font-size:12px;cursor:pointer;padding:1px 4px;border-radius:4px;flex-shrink:0;line-height:1}
+.toc-header-del:hover{background:#FCE8E8}
+.toc-editing .toc-header-del{display:inline-flex}
+/* Drag handle in edit mode */
+.toc-drag-handle{display:none;cursor:grab;padding:0 4px;color:#CCC;font-size:14px;flex-shrink:0;line-height:1;align-items:center}
+.toc-editing .toc-drag-handle{display:flex}
+.toc-editing .toc-item-wrap{cursor:default}
+.toc-drag-over{outline:2px dashed #EF9F27;outline-offset:1px;border-radius:4px}
+.toc-dragging{opacity:.4}
+/* Add item dialog reuses .add-dialog styles */
+/* Student roster table */
+.student-table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+.student-table th{background:#F4F6FF;color:#3B4A8A;font-weight:600;padding:8px 12px;text-align:left;border-bottom:2px solid #BFCBF0}
+.student-table td{padding:7px 12px;border-bottom:1px solid #EEE;vertical-align:middle}
+.student-table tr:hover td{background:#F8F9FF}
+.student-table .yr-badge{display:inline-block;background:#E8EEFF;color:#3B4A8A;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px}
+.student-table .del-row-btn{background:none;border:none;color:#DDD;cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px;display:inline;transition:color .15s}
+
+/* ── Mobile menu button (hidden on desktop) ── */
+.mob-menu-btn{display:none;background:none;border:none;padding:4px;cursor:pointer;color:#555;flex-shrink:0;border-radius:6px;align-items:center;justify-content:center}
+.mob-menu-btn:hover{background:#F0F0F0}
+
+/* ── TOC slide-in overlay (mobile) ── */
+.toc-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1200}
+.toc-overlay.open{display:block}
+
+/* ── Responsive: tablet (≤900px) ── */
+@media(max-width:900px){
+  .toc{width:200px}
+  .guide-body{padding:20px 24px}
+}
+
+/* ── Responsive: mobile (≤680px) ── */
+@media(max-width:680px){
+  /* Show hamburger, hide ribbon on mobile */
+  .mob-menu-btn{display:flex}
+  .ribbon-scroll{display:none}
+
+  /* Topbar tighter */
+  .topbar-row1{padding:8px 14px;gap:8px}
+  .logo{font-size:14px}
+  .badge{font-size:11px;padding:2px 7px}
+
+  /* TOC slides in from left as overlay */
+  .layout{position:relative}
+  .toc{
+    position:fixed;top:0;left:0;height:100%;z-index:1300;
+    width:80vw;max-width:300px;
+    transform:translateX(-100%);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);
+    box-shadow:none;
+    padding-top:env(safe-area-inset-top,0px);
+  }
+  .toc.mob-open{
+    transform:translateX(0);
+    box-shadow:4px 0 20px rgba(0,0,0,.18);
+  }
+
+  /* Content takes full width */
+  .guide-body{padding:16px 16px 32px;max-width:100%}
+
+  /* Section title smaller */
+  .section-title{font-size:16px;margin-bottom:12px}
+
+  /* Tables scroll horizontally */
+  table,.student-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* Sys cards full width */
+  .sys{padding:10px 12px}
+  .sys-name{font-size:14px}
+  .sys-row{font-size:14px}
+
+  /* Steps readable */
+  .step{padding:10px 12px;gap:10px}
+  .step-num{width:22px;height:22px;font-size:11px}
+  .step-title{font-size:14px}
+  .step-desc{font-size:14px}
+
+  /* Tip/warn/alert smaller gap */
+  .tip,.warn,.alert{font-size:14px;padding:9px 12px}
+
+  /* Student toolbar wraps */
+  .stu-add-row{flex-wrap:wrap}
+  .stu-add-row input{min-width:60px}
+
+  /* TOC edit bar vertical */
+  .toc-edit-bar{flex-direction:column}
+
+  /* Modal wider on phone */
+  .stu-modal{min-width:280px;max-width:92vw;padding:20px 18px}
+
+  /* Safe area bottom */
+  .guide-body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+}
+
+/* ── Very small phones (≤380px) ── */
+@media(max-width:380px){
+  .guide-body{padding:12px 12px 32px}
+  .toc{width:88vw}
+  .section-title{font-size:15px}
+  p,li,.step-desc,.step-title,.sys-name,.sys-row,.tip,.warn,.alert{font-size:14px}
+}
+
+/* ── Login screen ── */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#FFF8EE 0%,#F5F5F5 100%);display:flex;align-items:center;justify-content:center;z-index:99999}
+#login-box{background:#fff;border-radius:16px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.12);width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:center;gap:0}
+#login-logo{font-size:22px;font-weight:700;color:#1A1A1A;margin-bottom:6px;text-align:center}
+#login-sub{font-size:13px;color:#888;margin-bottom:24px;text-align:center}
+#login-pw{width:100%;border:1px solid #D0D0D0;border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;outline:none;margin-bottom:12px}
+#login-pw:focus{border-color:#EF9F27;box-shadow:0 0 0 2px rgba(239,159,39,.18)}
+#login-btn{width:100%;padding:11px;border-radius:8px;border:none;background:#EF9F27;color:#fff;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s}
+#login-btn:hover{background:#D98F20}
+
+/* ── Change password button ── */
+#change-pw-btn{font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid #D5D5D5;background:#fff;color:#666;cursor:pointer;font-family:inherit;transition:background .15s;margin-left:4px}
+#change-pw-btn:hover{background:#F0F0F0}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-row1">
+    <button class="mob-menu-btn" id="mob-menu-btn" aria-label="開啟目錄">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="3" y1="5" x2="17" y2="5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="15" x2="17" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="logo"><i class="ti ti-flask" style="color:#EF9F27"></i>NTPUGIIM_CLAB</div>
+    <div class="badge">Clab 研究助理報帳指南</div>
+    <button id="change-pw-btn" title="更改密碼" style="margin-left:auto">🔑 更改密碼</button>
+  </div>
+  <!-- Word-style ribbon (disabled until editing) -->
+  <div class="ribbon-scroll"><div class="ribbon ribbon-disabled" id="ribbon">
+    <!-- 字型大小 -->
+    <div class="rb-group">
+      <select class="rb-select" id="rb-size" title="字體大小">
+        <option value="">大小</option>
+        <option value="12px">12</option>
+        <option value="13px">13</option>
+        <option value="14px">14</option>
+        <option value="15px">15</option>
+        <option value="16px">16</option>
+        <option value="18px">18</option>
+        <option value="20px">20</option>
+        <option value="24px">24</option>
+      </select>
+    </div>
+    <div class="rb-sep"></div>
+    <!-- 文字樣式 -->
+    <div class="rb-group">
+      <button class="rb-btn" id="rb-bold" title="粗體 (Ctrl+B)"><b style="font-size:14px">B</b></button>
+      <button class="rb-btn" id="rb-italic" title="斜體 (Ctrl+I)"><i style="font-size:14px;font-style:italic">I</i></button>
+      <button class="rb-btn" id="rb-underline" title="底線 (Ctrl+U)"><u style="font-size:13px">U</u></button>
+      <button class="rb-btn" id="rb-strike" title="刪除線">
+        <svg viewBox="0 0 16 16"><path d="M3 8h10M5 5c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2M5 11c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="rb-sep"></div>
+    <!-- 文字顏色 -->
+    <div class="rb-group">
+      <div class="rb-color-wrap" id="wrap-fg">
+        <button class="rb-color-btn" id="rb-fg" title="文字顏色">
+          <span class="cb-icon" style="font-size:13px;font-weight:700;color:#1A1A1A">A</span>
+          <span class="cb-swatch" id="fg-swatch" style="background:#1A1A1A"></span>
+        </button>
+        <div class="rb-color-popup" id="popup-fg">
+          <div class="cp-label">文字顏色</div>
+          <div class="cp-grid" id="fg-grid"></div>
+          <div class="cp-custom">
+            <input type="color" id="fg-custom" value="#1A1A1A">
+            <span>自訂顏色</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rb-sep"></div>
+    <!-- 對齊 -->
+
+    <div class="rb-group">
+      <button class="rb-btn" id="rb-left" title="靠左對齊">
+        <svg viewBox="0 0 16 16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button class="rb-btn" id="rb-center" title="置中對齊">
+        <svg viewBox="0 0 16 16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="8" x2="12" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button class="rb-btn" id="rb-right" title="靠右對齊">
+        <svg viewBox="0 0 16 16"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="6" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="4" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="rb-sep"></div>
+    <!-- 清除格式 -->
+    <div class="rb-group">
+      <button class="rb-btn" id="rb-clear" title="清除格式">
+        <svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 12L12 4M9 3l4 4-6 6H3v-4l6-6z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span style="font-size:11px;margin-left:2px">清除</span>
+      </button>
+    </div>
+    <div style="margin-left:auto;font-size:11px;color:#AAA;padding-right:4px" id="ribbon-hint">進入編輯模式後可使用</div>
+  </div></div>
+</div>
+<div id="toc-overlay" class="toc-overlay"></div>
+<div class="layout">
+  <nav class="toc" id="toc">
+    <div class="toc-header grp-base"><span class="toc-header-label">📁 基本資訊</span><span class="toc-chevron">▾</span></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item top active" href="#s-hire">📋 助理聘用文件</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item top" href="#s-work">💼 工作內容總覽</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-header grp-acc"><span class="toc-header-label">💰 報帳流程</span><span class="toc-chevron">▾</span></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-sheet">雲端帳務記錄表</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-steps">一般報帳步驟</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-amount">金額處理規則</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-docs">報帳文件清單</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-purchase">請購流程（NT$10,000 以上）</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-writeoff">核銷流程</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-other">其他補助項目報帳</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-header grp-sys"><span class="toc-header-label">🖥️ 系統與差旅</span><span class="toc-chevron">▾</span></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-sys">系統帳號資訊</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-travel">國外差旅注意事項</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-change">計畫變更</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-loan">借款</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item sub" href="#s-close">結案流程</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-header grp-report"><span class="toc-header-label">📝 工作填報</span><span class="toc-chevron">▾</span></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item top" href="#s-students">👥 歷屆助理名單</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <div class="toc-item-wrap" draggable="true"><span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="toc-item top" href="#s-report">📝 每月工作填報</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div></div>
+    <!-- TOC edit controls at bottom -->
+    <div class="toc-edit-bar" id="toc-edit-bar">
+      <button class="toc-edit-btn" id="toc-toggle-edit">✏️ 編輯側邊欄</button>
+      <button class="toc-edit-btn" id="toc-add-item" style="display:none">＋ 新增項目</button>
+      <button class="toc-edit-btn" id="toc-add-group" style="display:none">📂 新增群組</button>
+    </div>
+  </nav>
+
+  <div class="guide-body" id="guide-body">
+
+    <div class="section" id="s-hire">
+      <div class="section-title"><span class="icon">📋</span>助理聘用文件</div>
+      <div class="tip"><i class="ti ti-info-circle"></i><div>⚠️請老師進「教師資訊系統」完成聘用流程後輸出合約申請單，再備齊以下文件。</div></div>
+      <ul class="checklist">
+        <li>申請單填寫並簽名</li>
+        <li>身分證正反面影本</li>
+        <li>學生證正反面影本</li>
+        <li>存摺影本</li>
+      </ul>
+    </div>
+
+    <div class="section" id="s-work">
+      <div class="section-title"><span class="icon">💼</span>工作內容總覽</div>
+
+      <h3>1️⃣ 協助計畫申請與執行</h3>
+      <p>老師會準備計畫申請文件，助理協助後續行政與執行事宜。北大國科會計畫流程資訊：</p>
+      <a href="https://new.ntpu.edu.tw/ord/projects-most?lang=zh" target="_blank">https://new.ntpu.edu.tw/ord/projects-most?lang=zh</a>
+
+      <h3>2️⃣ 協助課程活動</h3>
+      <p>課程相關行政工作，包含以下項目：</p>
+      <ul>
+        <li><strong>海報製作</strong>：設計並產出課程活動宣傳海報</li>
+        <li><strong>講者報帳</strong>：協助講者完成差旅或講師費報帳流程</li>
+        <li><strong>演講文案</strong>：撰寫課程演講活動之宣傳或介紹文案</li>
+      </ul>
+
+      <h3>3️⃣ USR 參訪事宜</h3>
+
+      <p><strong>📋 行前準備</strong></p>
+      <ul>
+        <li>接洽並統計預計參加的師生名單</li>
+        <li>於活動前發送<strong>參加提醒信件</strong>給所有參與者</li>
+      </ul>
+
+      <p><strong>🛡️ 保險事宜</strong></p>
+      <p>USR 相關參訪活動須為學生與老師投保，有以下兩種方式：</p>
+      <ul>
+        <li>
+          <strong>方式一：透過院辦統一投保</strong><br>
+          將同學資料提交給院辦詩涵，由詩涵統一辦理投保。繳費者須為被保險人之一（通常由助理或任一參與同學繳費），詩涵事後返還費用。保險資料完成後，須發給每位參與者<strong>親簽</strong>。
+        </li>
+        <li style="margin-top:10px">
+          <strong>方式二：透過熟識保險業務自行投保</strong><br>
+          若助理認識保險業務，可自行投保後再向詩涵請款。
+        </li>
+      </ul>
+      <div class="tip"><i class="ti ti-info-circle"></i><div>⚠️已有學校保險的老師<strong>無需</strong>另行提供保險資料，僅需統計學生名單即可。</div></div>
+    </div>
+
+    <div class="section" id="s-sheet">
+      <div class="section-title"><span class="icon">📊</span>雲端帳務記錄表</div>
+      <div class="tip"><i class="ti ti-table"></i><div>⚠️所有名目、發票號碼、黏存單號碼均須記錄於共享表格（行政費無需紀錄）。</div></div>
+      <div class="sys">
+        <div class="sys-name">113/08/01–115/07/31（115 年結案）</div>
+        <a href="https://docs.google.com/spreadsheets/d/1XMpSj_aL6IhzNg8h0Kp_MhgCMpGGFO8_TdNIKdYPrdU/edit?gid=1817254149#gid=1817254149" target="_blank">開啟 Google 試算表</a>
+      </div>
+      <div class="sys">
+        <div class="sys-name">113 年結案</div>
+        <a href="https://docs.google.com/spreadsheets/u/0/d/1-3mOA_H6DcE_47l1mQr4vxn2njc_YZ1BWRzNp6gDtb4/htmlview" target="_blank">開啟 Google 試算表</a>
+      </div>
+    </div>
+
+    <div class="section" id="s-steps">
+      <div class="section-title"><span class="icon">🔢</span>一般報帳步驟</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">確認報帳項目與資訊</div>
+            <div class="step-desc">
+              確認項目符合計畫申請書內容，並確認對應費用類別：<br><br>
+              • <b>業務費</b>：每月主持人費、人力、一般雜支。未花完的部分結案後依比例轉為結餘款。<br>
+              • <b>研究設備費</b>：限申請書排定的設備，且須為<b>金額超過 NT$10,000、可使用兩年以上</b>的設備才能列此費用。未用完的設備費<b>直接繳回國科會，無法轉為結餘款</b>；接近結案前建議優先將剩餘設備費流用至業務費或國外差旅費。<br>
+              • <b>國外差旅費</b>：申請書排定的國外差旅。未花完的部分結案後依比例轉為結餘款。<br>
+              • <b>行政費</b>：其他行政費用（結案時學校全數收回，執行率 100%）<br><br>
+              確認費用別餘額是否足夠；不足可申請流用款項。
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">準備報帳文件</div>
+            <div class="step-desc">詳見下方「報帳文件清單」。</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">（視需要）請購流程</div>
+            <div class="step-desc">金額超過 NT$10,000 需先請購，詳見「請購流程」。</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>
+            <div class="step-title">核銷流程</div>
+            <div class="step-desc">整理文件放公夾，交助教蓋老師章，完成核銷。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="s-amount">
+      <div class="section-title"><span class="icon">💰</span>金額處理規則</div>
+      <table>
+        <thead><tr><th>金額範圍</th><th>處理方式</th><th>財產掛載</th></tr></thead>
+        <tbody>
+          <tr><td>NT$4,000 以下</td><td>直接核銷</td><td>非消耗品視情況掛財產</td></tr>
+          <tr><td>NT$4,001–$10,000</td><td>直接核銷</td><td>掛財產</td></tr>
+          <tr><td>NT$10,001 以上</td><td>先請購 → 再核銷</td><td>掛財產（動產）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section" id="s-docs">
+      <div class="section-title"><span class="icon">📁</span>報帳文件清單</div>
+      <h3>一般情況</h3>
+      <ul><li>發票或收據（須打統編）</li></ul>
+      <div class="tip"><i class="ti ti-building"></i><div>⚠️抬頭「國立臺北大學」／統編 10617383</div></div>
+      <h3>國外消費（無發票）</h3>
+      <ul>
+        <li>支出證明單（.odt）</li>
+        <li>所有付費文件（信用卡帳單、購買確認 Email 等）</li>
+      </ul>
+      <h3>專家訪談領款</h3>
+      <ul>
+        <li>領款收據（.odt）— 需填寫完整銀行帳戶資訊（含分行名稱）</li>
+        <li>國立臺北大學學者專家諮詢會議簽到表</li>
+      </ul>
+      <div class="alert"><i class="ti ti-alert-triangle"></i><div><strong>注意事項</strong><ol style="margin:6px 0 0 0;padding-left:18px;line-height:1.8"><li>領款收據務必填寫完整資訊，包含<strong>姓名、身分證字號、戶籍地址、手機、存摺封面（含分行名稱）</strong>，以便會計系統建檔。</li><li>已曾至學校報帳者，提供<strong>姓名、身分證字號</strong>即可。</li></ol></div></div>
+    </div>
+
+    <div class="section" id="s-purchase">
+      <div class="section-title"><span class="icon">🛒</span>請購流程（NT$10,000 以上）</div>
+      <ol>
+        <li>進入會計網路服務請購系統，輸入用途、項目規格與費用</li>
+        <li>若已確定金額直接輸入；若未確定，估填較高金額（避免超出）</li>
+        <li>附上報價單或購買確認 Email 等含金額資訊的文件</li>
+        <li>列印請購編號單，整理文件放公夾，交助教蓋老師章</li>
+        <li>審查通過後文件送回所辦自行留存，待完成購買後核銷</li>
+      </ol>
+    </div>
+
+    <div class="section" id="s-writeoff">
+      <div class="section-title"><span class="icon">✅</span>核銷流程</div>
+      <ol>
+        <li>備妥發票、收據、信用卡帳單等文件</li>
+        <li>列印請購編號單（有掛財產者附財產文件）</li>
+        <li>請購編號單上貼發票或收據；有掛財產部分填寫財產編號、所有人與地點</li>
+        <li>助理在經手人欄位簽名</li>
+        <li>整理所有文件放公夾，交助教蓋老師章</li>
+      </ol>
+    </div>
+
+    <div class="section" id="s-other">
+      <div class="section-title"><span class="icon">📄</span>其他補助項目報帳</div>
+      <h3>校內外論文委外編修及翻譯補助</h3>
+      <p>補助規定：2 年 2 萬元。申請時需備齊以下文件：</p>
+      <ul class="checklist">
+        <li>投稿期刊/書籍確認收到投稿的回函（核對篇名、期刊名稱）</li>
+        <li>投稿論文首頁（含篇名、作者序資訊，需為第一或通訊作者）</li>
+        <li>受委託公司開立的編修證明</li>
+        <li>受委託公司的收據或發票正本（線上收據須列印紙本）</li>
+        <li>（公司位於國外）請老師在收據/發票上擇一註記勞務提供地聲明並核章</li>
+        <li>（國外且老師刷卡墊付）信用卡帳單影本（含姓名、消費明細、匯率等）</li>
+      </ul>
+      <div class="tip"><i class="ti ti-phone"></i><div>⚠️相關問題請洽研究發展處（行政大樓 3F 或 Email 聯繫）</div></div>
+    </div>
+
+    <div class="section" id="s-sys">
+      <div class="section-title"><span class="icon">💻</span>系統帳號資訊</div>
+      <div class="warn"><i class="ti ti-lock"></i><div><strong>⚠️ 注意</strong>：帳密資訊僅限研究助理與教授查閱，請勿對外分享。</div></div>
+      <div class="sys">
+        <div class="sys-name">會計網路服務請購系統</div>
+        <div class="sys-row">網址：<a href="https://purchase.ntpu.edu.tw/APSWIS_Q/Login_L_Q.asp" target="_blank">purchase.ntpu.edu.tw</a></div>
+        <div class="sys-row">帳號：<span>A227235206（身分證字號）</span></div>
+        <div class="sys-row">密碼：<span>請向現任 RA 或教授取得</span></div>
+      </div>
+      <div class="sys">
+        <div class="sys-name">國立臺北大學財管系統</div>
+        <div class="sys-row">網址：<a href="http://asset.ntpu.edu.tw:8888/sys_AMSIS_NSTC/login.aspx" target="_blank">asset.ntpu.edu.tw（需校網）</a></div>
+        <div class="sys-row">帳號：<span>身分證字號後五碼</span></div>
+        <div class="sys-row">密碼：<span>請向現任 RA 或教授取得</span></div>
+      </div>
+      <div class="sys">
+        <div class="sys-name">國立台北大學兼職人員保險管理系統</div>
+        <div class="sys-row">網址：<a href="https://sea.cc.ntpu.edu.tw/pls/svc/chk_signon.html" target="_blank">sea.cc.ntpu.edu.tw</a></div>
+        <div class="sys-row">帳號：<span>學號</span></div>
+        <div class="sys-row">密碼：<span>同學生資訊系統</span></div>
+      </div>
+      <!-- 動態新增的系統卡 -->
+      <div id="sys-extra-cards"></div>
+      <button class="sys-add-btn" id="sys-add-btn">＋ 新增系統</button>
+    </div>
+
+    <div class="section" id="s-travel">
+      <div class="section-title"><span class="icon">✈️</span>國外差旅注意事項</div>
+      <h3>出國前</h3>
+      <ul><li>填寫請假單（國外出差申請單範例 .odt）</li></ul>
+      <h3>出國後（核銷）</h3>
+      <ul><li>填寫出差旅費報告表（整合費用內容，範例 .docx）</li></ul>
+      <h3>🌏 國外生活費計算方式</h3>
+      <ul>
+        <li><b>計算天數</b>：研討會<b>前一天</b> + 研討會<b>期間</b>全程</li>
+        <li><b>金額依據</b>：主計處每年公布的「<a href="https://law.dgbas.gov.tw/NewsContent.aspx?id=21709" target="_blank">國外各地區出差人員生活費日支數額表</a>」，以出發當年度最新版本為準</li>
+        <li><b>匯率</b>：以<b>出發前一天</b>台灣銀行<b>即期賣出匯率</b>換算，幣別為<b>美金（USD）</b></li>
+      </ul>
+      <div class="tip"><i class="ti ti-info-circle"></i><div>⚠️生活費計算請於出發前先行確認主計處最新公告金額，以免核銷時金額不符。</div></div>
+    </div>
+
+    <div class="section" id="s-change">
+      <div class="section-title"><span class="icon">🔄</span>計畫變更</div>
+      <ul>
+        <li>請老師進國科會系統申請更改</li>
+        <li>附上簽陳文件（計畫變更國外差旅費範例簽_基本.docx）</li>
+      </ul>
+    </div>
+
+    <div class="section" id="s-loan">
+      <div class="section-title"><span class="icon">💳</span>借款</div>
+      <p>填寫「計畫經費暫墊付申請表」（.odt）</p>
+    </div>
+
+    <div class="section" id="s-close">
+      <div class="section-title"><span class="icon">🏁</span>結案流程</div>
+      <div class="tip"><i class="ti ti-info-circle"></i><div>⚠️待收支皆完成後才開始執行結案。</div></div>
+      <ul class="checklist">
+        <li>
+          <strong>開立行政管理費收據</strong>：會計請購系統 → 選計畫 → 收支明細 → 確認金額 → 填表<br>
+          <span style="font-size:12px;color:#555">📄 填寫「申請開立行政管理費收據之表單（範例）.docx」</span>
+        </li>
+        <li>
+          <strong>填寫彙報表</strong>（彙報表.odt）
+        </li>
+      </ul>
+      <div class="alert"><i class="ti ti-alert-triangle"></i><div><strong>⚠️ 注意</strong>：結案時務必記得填寫「申請開立行政管理費收據之表單（範例）.docx」，此步驟容易遺漏，請特別留意。</div></div>
+      <h3>相關資源</h3>
+      <ul>
+        <li><a href="https://new.ntpu.edu.tw/oa/files?tag=表單" target="_blank">NTPU 結案表單資源</a></li>
+        <li><a href="https://cms-carrier.ntpu.edu.tw/uploads/_2370ccb91e.pdf" target="_blank">國科會系統結案說明 PDF</a></li>
+      </ul>
+    </div>
+
+    <div class="section" id="s-students">
+      <div class="section-title"><span class="icon">👥</span>歷屆成員名單</div>
+
+      <!-- 工具列 -->
+      <div class="stu-toolbar">
+        <div class="stu-toolbar-left">
+          <button class="stu-btn" id="stu-add-col-btn">＋ 新增欄位</button>
+          <button class="stu-btn stu-btn-del-col" id="stu-del-col-btn">－ 刪除欄位</button>
+        </div>
+        <div class="stu-toolbar-right">
+          <button class="stu-csv-btn" id="stu-export-btn">⬇ 匯出 CSV</button>
+          <label class="stu-csv-btn stu-import-label">⬆ 匯入 CSV
+            <input type="file" id="stu-import-input" accept=".csv" style="display:none">
+          </label>
+        </div>
+      </div>
+
+      <!-- 表格（欄位完全由 JS 控制） -->
+      <table class="student-table" id="student-table">
+        <thead id="student-thead"><tr id="student-thead-row"></tr></thead>
+        <tbody id="student-tbody"></tbody>
+      </table>
+      <p id="stu-empty-hint" style="color:#aaa;font-size:13px;text-align:center;padding:16px 0;display:none">尚無資料。請先按「＋ 新增欄位」建立欄位，再按「＋ 新增列」輸入資料。</p>
+
+      <!-- 新增列（inputs 由 JS 動態產生） -->
+      <div class="stu-add-row" id="stu-add-row" style="display:none">
+        <!-- inputs 由 JS 插入 -->
+        <button class="stu-add-btn" id="stu-add-btn">＋ 新增列</button>
+      </div>
+    </div>
+
+    <div class="section" id="s-report">
+      <div class="section-title"><span class="icon">📝</span>每月工作填報</div>
+      <div class="warn"><i class="ti ti-clock"></i><div><strong>⚠️ 注意</strong>：每月底前須完成填報，請勿拖延。</div></div>
+      <div class="sys">
+        <div class="sys-name">國立台北大學兼職人員保險管理系統</div>
+        <div class="sys-row">網址：<a href="https://sea.cc.ntpu.edu.tw/pls/svc/chk_signon.html" target="_blank">sea.cc.ntpu.edu.tw</a></div>
+        <div class="sys-row">帳號：<span>學號</span></div>
+        <div class="sys-row">密碼：<span>同學生資訊系統</span></div>
+      </div>
+      <h3>操作步驟</h3>
+      <ol>
+        <li>登入系統</li>
+        <li>進入「聘用文件填報」</li>
+        <li>點選「學習進度表填寫」，填寫完成後點「儲存」</li>
+        <li>返回「聘用文件填報」</li>
+        <li>點選「學習進度表送審」完成送出</li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════
+// Firebase 初始化 & 密碼保護
+// ═══════════════════════════════════════════════════════════════
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCRfvK7NqhIyAU0EwuwGAMHuUBCO8mjalI",
+  authDomain: "ntpu-giim-clab.firebaseapp.com",
+  projectId: "ntpu-giim-clab",
+  storageBucket: "ntpu-giim-clab.firebasestorage.app",
+  messagingSenderId: "636635901647",
+  appId: "1:636635901647:web:a7fd07649955908d2591ba"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Firebase 存取 helpers ──
+async function fbGet(docPath) {
+  try {
+    const snap = await getDoc(doc(db, ...docPath.split('/')));
+    return snap.exists() ? snap.data() : null;
+  } catch { return null; }
+}
+async function fbSet(docPath, data) {
+  try { await setDoc(doc(db, ...docPath.split('/')), data, { merge: true }); } catch(e) { console.warn('fbSet error', e); }
+}
+
+// ── 密碼保護 ──────────────────────────────────────────────────
+const DEFAULT_PW = 'claudialab2026';
+let _unlocked = false;
+
+async function getStoredPw() {
+  const d = await fbGet('config/password');
+  return (d && d.value) ? d.value : DEFAULT_PW;
+}
+
+function showLoginScreen() {
+  // 隱藏頁面本體
+  document.body.style.display = 'none';
+  const scr = document.createElement('div');
+  scr.id = 'login-screen';
+  scr.innerHTML = `
+    <div id="login-box">
+      <div id="login-logo">🔐 Clab 研究助理指南</div>
+      <div id="login-sub">請輸入密碼以繼續</div>
+      <input id="login-pw" type="password" placeholder="密碼" autocomplete="current-password">
+      <button id="login-btn">進入</button>
+      <div id="login-err" style="display:none;color:#C53030;font-size:13px;margin-top:8px">密碼錯誤，請再試一次</div>
+    </div>`;
+  document.documentElement.appendChild(scr);
+
+  const pwInp = document.getElementById('login-pw');
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+
+  async function tryLogin() {
+    const entered = pwInp.value;
+    const correct = await getStoredPw();
+    if (entered === correct) {
+      scr.remove();
+      document.body.style.display = '';
+      _unlocked = true;
+      sessionStorage.setItem('clab_auth', '1');
+      initApp();
+    } else {
+      err.style.display = 'block';
+      pwInp.value = '';
+      pwInp.focus();
+    }
+  }
+  btn.addEventListener('click', tryLogin);
+  pwInp.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  setTimeout(() => pwInp.focus(), 100);
+}
+
+// 確認本次 session 是否已解鎖
+// module 在 DOM 解析完後才執行，不需等 DOMContentLoaded
+if (sessionStorage.getItem('clab_auth') === '1') {
+  _unlocked = true;
+  initApp();
+} else {
+  showLoginScreen();
+}
+
+// ── Firebase storage helpers（替代 localStorage）──────────────
+// 所有資料存在 Firestore 的 data/ collection 下
+const FB = {
+  async load(key, fallback) {
+    const d = await fbGet('data/' + key);
+    return (d && d.payload !== undefined) ? d.payload : fallback;
+  },
+  async save(key, value) {
+    await fbSet('data/' + key, { payload: value });
+  }
+};
+
+// ─── Initial section display ──────────────────────────────────
+// Show only the first section on load; the rest are hidden
+// (showSection is defined later — run after full DOM setup)
+window._initSectionDisplay = function() {
+  const firstLink = document.querySelector('#toc .toc-item');
+  if (firstLink) {
+    const href = firstLink.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      showSection(href.slice(1));
+      return;
+    }
+  }
+  // Fallback: show first section
+  const firstSection = document.querySelector('#guide-body .section');
+  if (firstSection) {
+    document.querySelectorAll('#guide-body .section').forEach((s,i) => s.style.display = i === 0 ? '' : 'none');
+    if (firstSection.id) {
+      const a = document.querySelector(`.toc-item[href="#${firstSection.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  }
+};
+
+// ─── TOC editor ───────────────────────────────────────────────
+(function setupTocEditor() {
+  const toc        = document.getElementById('toc');
+  const toggleBtn  = document.getElementById('toc-toggle-edit');
+  const addBtn     = document.getElementById('toc-add-item');
+  const addGrpBtn  = document.getElementById('toc-add-group');
+  const editBar    = document.getElementById('toc-edit-bar');
+  const STORE_TOC  = 'clab_toc_edits_v1';
+
+  // Build a snapshot of the whole TOC node list (headers + items, in order)
+  function snapshotToc() {
+    const nodes = [];
+    [...toc.children].forEach(el => {
+      if (el.classList.contains('toc-header')) {
+        const labelEl = el.querySelector('.toc-header-label');
+        const text = labelEl ? labelEl.textContent.trim() : el.textContent.replace(/▾|✕/g,'').trim();
+        nodes.push({
+          type: 'header',
+          cls: el.className.replace(/\s*grp-collapsed\s*/g,'').trim(),
+          text,
+          color: el.dataset.customColor || '',
+          collapsed: el.classList.contains('grp-collapsed')
+        });
+      } else if (el.classList.contains('toc-item-wrap')) {
+        const a = el.querySelector('.toc-item');
+        if (a) nodes.push({ type: 'item', href: a.getAttribute('href'), html: a.innerHTML, cls: a.className });
+      }
+      // skip toc-edit-bar
+    });
+    return nodes;
+  }
+
+  function saveToc() {
+    const snap = snapshotToc();
+    _tocCache = snap;
+    FB.save('toc', snap);
+  }
+  window._tocSaveFn = saveToc;
+  window._syncGroupVisibility = () => syncGroupVisibility();
+
+  function makeHeaderEl(cls, text, color) {
+    const h = document.createElement('div');
+    h.className = cls;
+    if (color) h.dataset.customColor = color;
+    const label = document.createElement('span');
+    label.className = 'toc-header-label';
+    label.textContent = text;
+    const chev = document.createElement('span');
+    chev.className = 'toc-chevron';
+    chev.textContent = '▾';
+    h.appendChild(label);
+    h.appendChild(chev);
+    applyHeaderColor(h);
+    return h;
+  }
+  function applyHeaderColor(h) {
+    const c = h.dataset.customColor;
+    if (!c) return;
+    h.style.color = c;
+    h.style.borderTopColor = c + '55';
+    h.style.borderTopWidth = '2px';
+    h.style.borderTopStyle = 'solid';
+    h.style.marginTop = '8px';
+  }
+  function makeWrapEl(cls, href, html) {
+    const wrap = document.createElement('div');
+    wrap.className = 'toc-item-wrap';
+    wrap.draggable = true;
+    wrap.innerHTML = `<span class="toc-drag-handle" title="拖曳排序">⠿</span><a class="${cls}" href="${href}">${html}</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div>`;
+    return wrap;
+  }
+
+  // applyTocSnapshot — called from applyStored() after Firebase load
+  function applyTocSnapshot(saved) {
+    if (!saved || !saved.length) return;
+    [...toc.children].forEach(el => {
+      if (el.classList.contains('toc-header') || el.classList.contains('toc-item-wrap')) el.remove();
+    });
+    saved.forEach(d => {
+      const el = d.type === 'header'
+        ? makeHeaderEl(d.cls, d.text, d.color || '')
+        : makeWrapEl(d.cls, d.href, d.html || d.text);
+      if (d.type === 'header' && d.collapsed) el.classList.add('grp-collapsed');
+      toc.insertBefore(el, editBar);
+    });
+    syncGroupVisibility();
+  }
+  window._applyTocSnapshot = applyTocSnapshot;
+
+  // ── Group accordion ─────────────────────────────────────────
+  function syncGroupVisibility() {
+    let currentCollapsed = false;
+    [...toc.children].forEach(el => {
+      if (el.classList.contains('toc-header')) {
+        currentCollapsed = el.classList.contains('grp-collapsed');
+      } else if (el.classList.contains('toc-item-wrap')) {
+        el.classList.toggle('grp-hidden', currentCollapsed);
+      }
+    });
+  }
+
+  function toggleGroup(header) {
+    header.classList.toggle('grp-collapsed');
+    syncGroupVisibility();
+    saveToc();
+  }
+
+  toc.addEventListener('click', e => {
+    const header = e.target.closest('.toc-header');
+    if (!header) return;
+    // In edit mode, clicking header is for editing text — don't collapse
+    if (editing) return;
+    // Don't collapse if clicking the del button
+    if (e.target.closest('.toc-header-del')) return;
+    toggleGroup(header);
+  });
+
+  // Auto-expand group when one of its items is clicked
+  toc.addEventListener('click', e => {
+    const a = e.target.closest('.toc-item');
+    if (!a) return;
+    // Find this item's group header
+    let el = a.closest('.toc-item-wrap')?.previousElementSibling;
+    while (el && !el.classList.contains('toc-header')) el = el.previousElementSibling;
+    if (el && el.classList.contains('grp-collapsed')) toggleGroup(el);
+  });
+
+  // ── Drag-and-drop reorder (edit mode only) ──────────────────
+  let dragSrc = null;
+  toc.addEventListener('dragstart', e => {
+    if (!editing) { e.preventDefault(); return; }
+    dragSrc = e.target.closest('.toc-item-wrap');
+    if (!dragSrc) return;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => dragSrc.classList.add('toc-dragging'), 0);
+  });
+  toc.addEventListener('dragend', () => {
+    if (dragSrc) { dragSrc.classList.remove('toc-dragging'); dragSrc = null; }
+    toc.querySelectorAll('.toc-drag-over').forEach(el => el.classList.remove('toc-drag-over'));
+  });
+  toc.addEventListener('dragover', e => {
+    if (!dragSrc) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.toc-item-wrap, .toc-header');
+    if (!target || target === dragSrc) return;
+    toc.querySelectorAll('.toc-drag-over').forEach(el => el.classList.remove('toc-drag-over'));
+    target.classList.add('toc-drag-over');
+  });
+  toc.addEventListener('drop', e => {
+    if (!dragSrc) return;
+    e.preventDefault();
+    const target = e.target.closest('.toc-item-wrap, .toc-header');
+    if (!target || target === dragSrc) return;
+    target.classList.remove('toc-drag-over');
+    // Insert before target (or after if dragging downward)
+    const rect = target.getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+    toc.insertBefore(dragSrc, after ? (target.nextElementSibling || editBar) : target);
+    syncGroupVisibility();
+    saveToc();
+    syncContentOrder();
+    showToast('順序已更新', 'ok');
+  });
+
+  let editing = false;
+
+  function applyEditingState() {
+    toc.classList.toggle('toc-editing', editing);
+    toggleBtn.textContent = editing ? '✅ 完成' : '✏️ 編輯側邊欄';
+    toggleBtn.classList.toggle('active-mode', editing);
+    addBtn.style.display    = editing ? '' : 'none';
+    addGrpBtn.style.display = editing ? '' : 'none';
+
+    // Make toc-item <a> tags directly editable (for rich text via ribbon)
+    toc.querySelectorAll('.toc-item').forEach(a => {
+      a.contentEditable = editing ? 'true' : 'false';
+      if (editing) {
+        a.style.cursor = 'text';
+        // Prevent navigation when clicking to edit
+        a._blockedClick = e => { if (document.activeElement === a) e.preventDefault(); };
+        a.addEventListener('click', a._blockedClick);
+      } else {
+        a.style.cursor = '';
+        if (a._blockedClick) { a.removeEventListener('click', a._blockedClick); delete a._blockedClick; }
+      }
+    });
+
+    // Enable ribbon while TOC is being edited
+    if (window.setRibbonEnabled) window.setRibbonEnabled(editing);
+
+    // Make group headers editable + show/hide del button
+    toc.querySelectorAll('.toc-header').forEach(h => {
+      // Make only the label span editable (not the whole header, which handles accordion clicks)
+      const labelSpan = h.querySelector('.toc-header-label');
+      if (labelSpan) labelSpan.contentEditable = editing ? 'true' : 'false';
+      else h.contentEditable = editing ? 'true' : 'false';
+      // remove stale del btn
+      h.querySelectorAll('.toc-header-del').forEach(b => b.remove());
+      if (editing) {
+        const delH = document.createElement('button');
+        delH.className = 'toc-header-del';
+        delH.textContent = '✕';
+        delH.title = '刪除此群組（含所有子項目）';
+        delH.addEventListener('mousedown', e => {
+          e.preventDefault();
+          // collect all following items until next header or edit bar
+          const siblings = [];
+          let cur = h.nextElementSibling;
+          while (cur && !cur.classList.contains('toc-header') && cur !== editBar) {
+            siblings.push(cur);
+            cur = cur.nextElementSibling;
+          }
+          siblings.forEach(s => s.remove());
+          h.remove();
+          saveToc();
+          showToast('群組已刪除', 'ok');
+        });
+        // Insert before the chevron arrow
+        const chev = h.querySelector('.toc-chevron');
+        if (chev) h.insertBefore(delH, chev); else h.appendChild(delH);
+      }
+    });
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    editing = !editing;
+    if (!editing) { saveToc(); if (window._syncContentOrder) window._syncContentOrder(); }
+    applyEditingState();
+    if (!editing) showToast('側邊欄已儲存', 'ok');
+  });
+
+  // ── Rename item ───────────────────────────────────────────
+  toc.addEventListener('click', e => {
+    const renameBtn = e.target.closest('.toc-item-act.rename');
+    const delBtn    = e.target.closest('.toc-item-act.del');
+    if (!editing) return;
+
+    if (renameBtn) {
+      const wrap = renameBtn.closest('.toc-item-wrap');
+      const a    = wrap.querySelector('.toc-item');
+      if (wrap.querySelector('.toc-rename-input')) return; // already open
+
+      const input = document.createElement('input');
+      input.className = 'toc-rename-input';
+      input.value = a.textContent.trim();
+      wrap.replaceChild(input, a);
+      input.focus(); input.select();
+
+      function commit() {
+        const val = input.value.trim() || a.textContent.trim();
+        a.textContent = val;
+        wrap.replaceChild(a, input);
+        saveToc();
+        // ── 同步到內文標題 ──
+        const href = a.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          const sectionId = href.slice(1);
+          const section = document.getElementById(sectionId);
+          if (section) {
+            const titleText = section.querySelector('.section-title .title-text');
+            if (titleText) titleText.textContent = val.replace(/^[\s\S]*?(\p{L}[\s\S]*)$/u, '$1').trim() || val;
+          }
+        }
+        showToast('已更新項目名稱', 'ok');
+      }
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); commit(); } });
+    }
+
+    if (delBtn) {
+      const wrap = delBtn.closest('.toc-item-wrap');
+      wrap.remove();
+      saveToc();
+      showToast('已刪除', 'ok');
+    }
+  });
+
+  // ── Add new item ──────────────────────────────────────────
+  addBtn.addEventListener('click', () => {
+    // Show a small dialog to pick: which group, label, link
+    const groups = [];
+    toc.querySelectorAll('.toc-header').forEach(h => groups.push(h.textContent.trim()));
+
+    document.querySelectorAll('.add-dialog').forEach(d => d.remove());
+    const dialog = document.createElement('div');
+    dialog.className = 'add-dialog';
+    dialog.innerHTML = `
+      <div class="add-dialog-inner">
+        <div class="add-dialog-title">新增側邊欄項目</div>
+        <label>群組（新增在此群組後方）</label>
+        <select id="toc-add-group">${groups.map((g,i)=>`<option value="${i}">${g}</option>`).join('')}</select>
+        <label>顯示名稱</label>
+        <input id="toc-add-label" style="width:100%;border:1px solid #D5D5D5;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none" placeholder="例：借款流程">
+        <label>連結目標（頁面區塊 ID，# 開頭）</label>
+        <input id="toc-add-href" style="width:100%;border:1px solid #D5D5D5;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;margin-top:0" placeholder="例：#s-loan">
+        <label>樣式</label>
+        <select id="toc-add-cls">
+          <option value="toc-item sub">子項目（縮排）</option>
+          <option value="toc-item top">頂層項目（粗體）</option>
+        </select>
+        <div class="add-dialog-actions">
+          <button id="toc-add-cancel" class="edit-btn">取消</button>
+          <button id="toc-add-confirm" class="edit-btn saving">新增</button>
+        </div>
+      </div>`;
+    document.documentElement.appendChild(dialog);
+
+    document.getElementById('toc-add-cancel').onclick = () => dialog.remove();
+    document.getElementById('toc-add-confirm').onclick = () => {
+      const label = document.getElementById('toc-add-label').value.trim();
+      const href  = document.getElementById('toc-add-href').value.trim() || '#';
+      const cls   = document.getElementById('toc-add-cls').value;
+      const grpIdx = parseInt(document.getElementById('toc-add-group').value);
+      if (!label) { showToast('請輸入名稱', 'warn'); return; }
+
+      // Build new wrap
+      const wrap = document.createElement('div');
+      wrap.className = 'toc-item-wrap';
+      wrap.innerHTML = `<a class="${cls}" href="${href}">${label}</a><div class="toc-item-actions"><button class="toc-item-act rename" title="改名">✏️</button><button class="toc-item-act del" title="刪除">✕</button></div>`;
+
+      // Insert after the last item in the chosen group
+      const headers = [...toc.querySelectorAll('.toc-header')];
+      const targetHeader = headers[grpIdx];
+      // Find last sibling before next header or toc-edit-bar
+      let cursor = targetHeader.nextElementSibling;
+      let lastInGroup = targetHeader;
+      while (cursor && !cursor.classList.contains('toc-header') && !cursor.id?.includes('toc-edit')) {
+        lastInGroup = cursor;
+        cursor = cursor.nextElementSibling;
+      }
+      lastInGroup.after(wrap);
+      saveToc();
+      dialog.remove();
+      showToast('已新增項目', 'ok');
+    };
+  });
+  // ── Add new group ─────────────────────────────────────────
+  addGrpBtn.addEventListener('click', () => {
+    document.querySelectorAll('.add-dialog').forEach(d => d.remove());
+    const dialog = document.createElement('div');
+    dialog.className = 'add-dialog';
+    const headerTexts = [...toc.querySelectorAll('.toc-header')].map(h => {
+      const lbl = h.querySelector('.toc-header-label');
+      return lbl ? lbl.textContent.trim() : h.textContent.replace(/[▾✕]/g,'').trim();
+    });
+    dialog.innerHTML = `
+      <div class="add-dialog-inner">
+        <div class="add-dialog-title">新增側邊欄群組</div>
+        <label>群組名稱（可加 emoji）</label>
+        <input id="grp-add-label" style="width:100%;border:1px solid #D5D5D5;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none" placeholder="例：📌 其他資源">
+        <label>群組顏色</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <input type="color" id="grp-add-color" value="#6B7280" style="width:40px;height:32px;border:1px solid #CCC;border-radius:6px;padding:2px;cursor:pointer">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${['#6B7280','#1D6FA4','#6D4C41','#2E7D5B','#7C3AED','#B45309','#BE185D','#0F766E'].map(c=>
+              `<div onclick="document.getElementById('grp-add-color').value='${c}'" style="width:20px;height:20px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent;transition:border .1s" onmouseover="this.style.border='2px solid #333'" onmouseout="this.style.border='2px solid transparent'"></div>`
+            ).join('')}
+          </div>
+        </div>
+        <label>插入位置</label>
+        <select id="grp-add-pos">
+          <option value="end">在所有群組最後</option>
+          ${headerTexts.map((t,i)=>`<option value="${i}">在「${t}」之前</option>`).join('')}
+        </select>
+        <div class="add-dialog-actions">
+          <button id="grp-add-cancel" class="edit-btn">取消</button>
+          <button id="grp-add-confirm" class="edit-btn saving">新增群組</button>
+        </div>
+      </div>`;
+    document.documentElement.appendChild(dialog);
+
+    document.getElementById('grp-add-cancel').onclick = () => dialog.remove();
+    document.getElementById('grp-add-confirm').onclick = () => {
+      const label = document.getElementById('grp-add-label').value.trim();
+      const color = document.getElementById('grp-add-color').value;
+      const pos   = document.getElementById('grp-add-pos').value;
+      if (!label) { showToast('請輸入群組名稱', 'warn'); return; }
+
+      const h = makeHeaderEl('toc-header grp-base', label, color);
+      // Since we're in edit mode, make editable and add del button
+      h.contentEditable = 'true';
+      const delH = document.createElement('button');
+      delH.className = 'toc-header-del';
+      delH.textContent = '✕';
+      delH.title = '刪除此群組';
+      delH.addEventListener('mousedown', ev => {
+        ev.preventDefault();
+        let cur = h.nextElementSibling;
+        while (cur && !cur.classList.contains('toc-header') && cur !== editBar) {
+          const nx = cur.nextElementSibling; cur.remove(); cur = nx;
+        }
+        h.remove();
+        saveToc();
+        showToast('群組已刪除', 'ok');
+      });
+      // Insert del before chevron
+      const chev = h.querySelector('.toc-chevron');
+      h.insertBefore(delH, chev);
+
+      if (pos === 'end') {
+        toc.insertBefore(h, editBar);
+      } else {
+        const headers = [...toc.querySelectorAll('.toc-header')];
+        const target  = headers[parseInt(pos)];
+        toc.insertBefore(h, target);
+      }
+      saveToc();
+      dialog.remove();
+      showToast('群組已新增，可繼續在此群組下新增項目', 'ok');
+    };
+  });
+})();
+
+// ─── Show only selected section ──────────────────────────────
+function showSection(id) {
+  document.querySelectorAll('#guide-body .section').forEach(s => {
+    s.style.display = s.id === id ? '' : 'none';
+  });
+  document.querySelectorAll('.toc-item').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+  });
+}
+
+// ─── Sync content order to match TOC order ────────────────────
+function syncContentOrder() {
+  const guideBody = document.getElementById('guide-body');
+  const sections = guideBody.querySelectorAll('.section');
+  // Build a map of id → element
+  const sectionMap = {};
+  sections.forEach(s => { if (s.id) sectionMap[s.id] = s; });
+  // Get ordered hrefs from TOC items
+  const tocItems = document.querySelectorAll('#toc .toc-item');
+  const ordered = [];
+  tocItems.forEach(a => {
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const id = href.slice(1);
+      if (sectionMap[id] && !ordered.includes(sectionMap[id])) {
+        ordered.push(sectionMap[id]);
+      }
+    }
+  });
+  // Append in new order (also appends any sections not in TOC at the end)
+  ordered.forEach(s => guideBody.appendChild(s));
+  // Sections not referenced in TOC stay at the end
+  sections.forEach(s => { if (!ordered.includes(s)) guideBody.appendChild(s); });
+}
+window._syncContentOrder = syncContentOrder;
+
+// Use event delegation so dynamically added items also work
+document.getElementById('toc').addEventListener('click', e => {
+  const a = e.target.closest('.toc-item');
+  if (!a) return;
+  e.preventDefault();
+  if (document.getElementById('toc').classList.contains('toc-editing')) return;
+  const href = a.getAttribute('href');
+  if (!href || href === '#') return;
+  showSection(href.slice(1));
+});
+
+// ─── Storage helpers (Firebase) ──────────────────────────────
+let _editsCache = {};
+let _tocCache   = null;
+let _sysCache   = null;
+let _stuCache   = null;
+
+function loadEdits() { return _editsCache; }
+function saveEdits(obj) {
+  _editsCache = obj;
+  FB.save('guide_edits', obj);
+}
+
+// ─── Real-time listeners (讓別人的改動即時反映） ─────────────
+function setupRealtime() {
+  // 內文 edits
+  onSnapshot(doc(db, 'data', 'guide_edits'), snap => {
+    if (!snap.exists()) return;
+    const fresh = snap.data().payload || {};
+    _editsCache = fresh;
+    // 只有其他人改的才重新套用（避免自己剛存完又重繪）
+    Object.entries(fresh).forEach(([id, html]) => {
+      if (id === 's-students') return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      tmp.querySelectorAll('.edit-toolbar,.del-btn,[contenteditable],.editable-active').forEach(e => {
+        if (e.hasAttribute('contenteditable')) e.removeAttribute('contenteditable');
+        e.classList.remove('editable-active');
+        if (e.classList.contains('edit-toolbar') || e.classList.contains('del-btn')) e.remove();
+      });
+      // Only update if content actually changed (avoid flicker while editing)
+      if (el.innerHTML.replace(/\s/g,'') !== tmp.innerHTML.replace(/\s/g,'')) {
+        el.innerHTML = tmp.innerHTML;
+        injectEditUI(el);
+      }
+    });
+  });
+  // TOC
+  onSnapshot(doc(db, 'data', 'toc'), snap => {
+    if (!snap.exists()) return;
+    _tocCache = snap.data().payload;
+  });
+  // sys cards
+  onSnapshot(doc(db, 'data', 'sys_cards'), snap => {
+    if (!snap.exists()) return;
+    _sysCache = snap.data().payload || [];
+    if (window._renderSysCards) window._renderSysCards(_sysCache);
+  });
+  // students
+  onSnapshot(doc(db, 'data', 'students'), snap => {
+    if (!snap.exists()) return;
+    _stuCache = snap.data().payload;
+    if (window._renderStudents) window._renderStudents(_stuCache);
+  });
+}
+
+// ─── Strip UI artifacts from HTML before saving ───────────────
+function cleanHTML(section) {
+  // Clone to avoid mutating live DOM
+  const clone = section.cloneNode(true);
+  clone.querySelectorAll('.edit-toolbar, .del-btn').forEach(el => el.remove());
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  clone.querySelectorAll('.editable-active').forEach(el => el.classList.remove('editable-active'));
+  clone.querySelectorAll('[style*="position"]').forEach(el => el.style.position = '');
+  return clone.innerHTML;
+}
+
+// ─── Apply saved edits on load ────────────────────────────────
+async function applyStored() {
+  const edits = await FB.load('guide_edits', {});
+  _editsCache = edits;
+  Object.entries(edits).forEach(([id, html]) => {
+    if (id === 's-students') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    tmp.querySelectorAll('.edit-toolbar, .del-btn').forEach(e => e.remove());
+    tmp.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+    tmp.querySelectorAll('.editable-active').forEach(e => e.classList.remove('editable-active'));
+    el.innerHTML = tmp.innerHTML;
+  });
+  document.querySelectorAll('.section').forEach(injectEditUI);
+
+  // ── 初始同步：只在 Firestore TOC 為空時，把內文標題同步到 TOC
+  const tocSnap = await FB.load('toc', null);
+  _tocCache = tocSnap;
+  if (!tocSnap) {
+    document.querySelectorAll('.section').forEach(section => {
+      if (!section.id) return;
+      const titleEl = section.querySelector('.section-title');
+      if (!titleEl) return;
+      const clone = titleEl.cloneNode(true);
+      clone.querySelectorAll('.icon, .edit-toolbar').forEach(e => e.remove());
+      const text = clone.textContent.trim();
+      if (!text) return;
+      const a = document.querySelector(`#toc .toc-item[href="#${section.id}"]`);
+      if (!a) return;
+      const existing = a.textContent.trim();
+      const prefixMatch = existing.match(/^([\p{Emoji}\s]*?)([^\p{Emoji}][\s\S]*)$/u);
+      const prefix = prefixMatch ? prefixMatch[1] : '';
+      a.textContent = prefix + text;
+    });
+    if (window._tocSaveFn) window._tocSaveFn();
+  } else {
+    // Apply saved TOC
+    if (window._applyTocSnapshot) window._applyTocSnapshot(tocSnap);
+  }
+}
+
+// ─── Sync section title → TOC item ───────────────────────────
+function syncTitleToToc(sectionId, newTitle) {
+  // Find the TOC link pointing to this section
+  const a = document.querySelector(`#toc .toc-item[href="#${sectionId}"]`);
+  if (!a) return;
+  // Extract leading emoji/icon (first char or emoji sequence before a space)
+  const tocText = a.textContent.trim();
+  // Keep any leading emoji prefix (non-letter characters before first letter)
+  const prefixMatch = tocText.match(/^([\s\S]*?)([a-zA-Z一-鿿][\s\S]*)$/);
+  const prefix = prefixMatch ? prefixMatch[1] : '';
+  a.textContent = prefix + newTitle;
+  // Save updated TOC
+  if (window._tocSaveFn) window._tocSaveFn();
+}
+
+// ─── Toolbar per section ──────────────────────────────────────
+function injectEditUI(section) {
+  // Remove any stale (dead) toolbar before checking
+  section.querySelectorAll('.edit-toolbar').forEach(t => t.remove());
+
+  const titleEl = section.querySelector('.section-title');
+  if (!titleEl) return;
+
+  // Wrap title text in .title-text span if not already done
+  if (!titleEl.querySelector('.title-text')) {
+    const icon = titleEl.querySelector('.icon');
+    const nodes = [...titleEl.childNodes].filter(n => n !== icon && !(n.nodeType === 1 && n.classList.contains('edit-toolbar')));
+    const textSpan = document.createElement('span');
+    textSpan.className = 'title-text';
+    textSpan.textContent = nodes.map(n => n.textContent).join('').trim();
+    nodes.forEach(n => n.remove());
+    if (icon) icon.after(textSpan);
+    else titleEl.prepend(textSpan);
+  }
+
+  // ── 歷屆名單：只有改名按鈕，無需進入編輯模式 ──
+  if (section.id === 's-students') {
+    const bar = document.createElement('div');
+    bar.className = 'edit-toolbar';
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'edit-btn';
+    renameBtn.innerHTML = '✏️ 編輯';
+    renameBtn.title = '修改此區塊在側邊欄的顯示名稱';
+    renameBtn.addEventListener('click', () => {
+      const titleText = titleEl.querySelector('.title-text');
+      const current = titleText ? titleText.textContent.trim() : '';
+      showModal({
+        title: '修改標題名稱',
+        inputLabel: '新名稱',
+        inputPlaceholder: '輸入新標題',
+        inputDefault: current,
+        confirmLabel: '儲存', cancelLabel: '取消',
+        onConfirm: val => {
+          if (!val || val === current) return;
+          if (titleText) titleText.textContent = val;
+          syncTitleToToc(section.id, val);
+          showToast('標題已更新並同步到側邊欄', 'ok');
+        }
+      });
+    });
+    bar.appendChild(renameBtn);
+    titleEl.appendChild(bar);
+    return; // 不注入編輯/取消/新增按鈕
+  }
+
+  const bar = document.createElement('div');
+  bar.className = 'edit-toolbar';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'edit-btn';
+  editBtn.innerHTML = '✏️ 編輯';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'edit-btn cancel-btn';
+  cancelBtn.innerHTML = '✕ 取消';
+  cancelBtn.title = '放棄本次編輯，還原所有變更';
+  cancelBtn.style.display = 'none';
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'edit-btn add-btn';
+  addBtn.innerHTML = '＋ 新增';
+  addBtn.title = '新增段落到此區塊';
+
+  bar.appendChild(editBtn);
+  bar.appendChild(cancelBtn);
+  bar.appendChild(addBtn);
+  titleEl.appendChild(bar);
+
+  // Snapshot of section HTML before editing starts
+  let preEditSnapshot = null;
+
+  editBtn.addEventListener('click', () => {
+    if (section.dataset.editing === '1') {
+      stopEditing(section, editBtn);
+      cancelBtn.style.display = 'none';
+      preEditSnapshot = null;
+    } else {
+      preEditSnapshot = cleanHTML(section);
+      startEditing(section, editBtn);
+      cancelBtn.style.display = '';
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    if (preEditSnapshot !== null) {
+      // Restore localStorage so the old content persists on reload
+      const edits = loadEdits();
+      edits[section.id] = preEditSnapshot;
+      saveEdits(edits);
+      // Restore DOM: cleanHTML stores innerHTML, so write it back
+      // Keep the edit-toolbar node, detach it first
+      const toolbar = section.querySelector('.edit-toolbar');
+      section.innerHTML = preEditSnapshot;
+      if (toolbar) section.appendChild(toolbar);
+    }
+    // Exit edit mode cleanly
+    section.querySelectorAll('[contenteditable="true"]').forEach(el => {
+      el.contentEditable = 'false';
+      el.classList.remove('editable-active');
+      el.removeAttribute('title');
+    });
+    section.querySelectorAll('.del-btn').forEach(b => {
+      if (b.parentElement) b.parentElement.style.position = '';
+      b.remove();
+    });
+    section.dataset.editing = '0';
+    editBtn.innerHTML = '✏️ 編輯';
+    editBtn.classList.remove('saving');
+    cancelBtn.style.display = 'none';
+    preEditSnapshot = null;
+    const anyEditing = !!document.querySelector('.section[data-editing="1"]');
+    if (!anyEditing && window.setRibbonEnabled) window.setRibbonEnabled(false);
+    showToast('已取消，未儲存任何變更', 'info');
+  });
+
+  addBtn.addEventListener('click', () => showAddDialog(section));
+}
+
+// 可刪除的區塊元素選擇器（li 獨立，刪後自動清空父層）
+const DELETABLE = 'p, h3, li, .tip, .warn, .alert, .step, .sys';
+
+function startEditing(section, btn) {
+  section.dataset.editing = '1';
+  btn.innerHTML = '💾 儲存';
+  btn.classList.add('saving');
+
+  // 歷屆名單用自己的互動介面，不套一般編輯模式
+  if (section.id === 's-students') {
+    if (window.setRibbonEnabled) window.setRibbonEnabled(false);
+    showToast('直接操作表格新增／刪除欄位與成員，完成後按儲存', 'info');
+    return;
+  }
+
+  // 讓標題文字可編輯
+  const titleText = section.querySelector('.section-title .title-text');
+  if (titleText) {
+    titleText.contentEditable = 'true';
+    titleText.classList.add('editable-active');
+    titleText.title = '點此修改標題（儲存後會同步到側邊欄）';
+  }
+
+  // 貼上網址自動轉超連結（定義在下方，供所有 editable 元素使用）
+  function handlePasteUrl(e) {
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain').trim();
+    if (/^https?:\/\/\S+$/.test(text)) {
+      e.preventDefault();
+      const a = `<a href="${text}" target="_blank" rel="noopener">${text}</a>`;
+      document.execCommand('insertHTML', false, a);
+    }
+  }
+
+  // 文字可編輯
+  section.querySelectorAll('p, li, h3, .step-title, .step-desc, .sys-name, .sys-row').forEach(el => {
+    el.contentEditable = 'true';
+    el.classList.add('editable-active');
+    el.addEventListener('paste', handlePasteUrl);
+  });
+  section.querySelectorAll('.tip > div, .warn > div, .alert > div').forEach(el => {
+    el.contentEditable = 'true';
+    el.classList.add('editable-active');
+    el.addEventListener('paste', handlePasteUrl);
+  });
+
+  // 每個可刪除元素加上紅色 ✕ 按鈕
+  section.querySelectorAll(DELETABLE).forEach(el => {
+    if (el.closest('.section-title') || el.classList.contains('edit-toolbar')) return;
+    if (el.querySelector(':scope > .del-btn')) return; // 已有
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.innerHTML = '✕';
+    delBtn.title = '刪除此段落';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.remove();
+      const edits = loadEdits();
+      edits[section.id] = cleanHTML(section);
+      saveEdits(edits);
+      showToast('已刪除並儲存', 'ok');
+    });
+
+    el.style.position = 'relative';
+    el.appendChild(delBtn);
+  });
+
+  if (window.setRibbonEnabled) window.setRibbonEnabled(true);
+  showToast('進入編輯模式：點文字可修改，點 ✕ 可刪除段落', 'info');
+}
+
+function stopEditing(section, btn) {
+  section.dataset.editing = '0';
+  btn.innerHTML = '✏️ 編輯';
+  btn.classList.remove('saving');
+
+  // 歷屆名單：資料已由 saveData() 即時存入 clab_students_v1，這裡只需離開模式
+  if (section.id === 's-students') {
+    const anyEditing = !!document.querySelector('.section[data-editing="1"]');
+    if (!anyEditing && window.setRibbonEnabled) window.setRibbonEnabled(false);
+    showToast('已儲存！', 'ok');
+    return;
+  }
+
+  // Sync title → TOC before disabling contenteditable
+  const titleText = section.querySelector('.section-title .title-text');
+  if (titleText && section.id) {
+    syncTitleToToc(section.id, titleText.textContent.trim());
+  }
+
+  section.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.contentEditable = 'false';
+    el.classList.remove('editable-active');
+    el.removeAttribute('title');
+  });
+
+  // 移除所有 ✕ 按鈕與 inline position
+  section.querySelectorAll('.del-btn').forEach(b => {
+    if (b.parentElement) b.parentElement.style.position = '';
+    b.remove();
+  });
+
+  const edits = loadEdits();
+  edits[section.id] = cleanHTML(section);
+  saveEdits(edits);
+  // Only disable ribbon if no section is currently editing
+  const anyEditing = !!document.querySelector('.section[data-editing="1"]');
+  if (!anyEditing && window.setRibbonEnabled) window.setRibbonEnabled(false);
+  showToast('已儲存！標題已同步到側邊欄', 'ok');
+}
+
+// ─── Add dialog ───────────────────────────────────────────────
+function showAddDialog(section) {
+  // Remove existing dialog if any
+  document.querySelectorAll('.add-dialog').forEach(d => d.remove());
+
+  const dialog = document.createElement('div');
+  dialog.className = 'add-dialog';
+  dialog.innerHTML = `
+    <div class="add-dialog-inner">
+      <div class="add-dialog-title">新增內容到「${section.querySelector('.section-title').textContent.trim()}」</div>
+      <label>類型</label>
+      <select id="add-type">
+        <option value="p">段落文字</option>
+        <option value="li-ul">項目清單（● 一條）</option>
+        <option value="h3">小標題（h3）</option>
+        <option value="tip">💡 提示框（藍）</option>
+        <option value="warn">⚠️ 注意框（黃）</option>
+        <option value="alert">🔴 警示框（紅）</option>
+        <option value="sys-card">🗂️ 系統卡片（白色框）</option>
+      </select>
+      <!-- 一般文字內容 -->
+      <div id="add-text-fields">
+        <label>內容</label>
+        <textarea id="add-content" rows="4" placeholder="輸入文字內容…"></textarea>
+      </div>
+      <!-- 系統卡片欄位（預設隱藏） -->
+      <div id="add-sys-fields" style="display:none;display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <label style="font-size:13px;color:#555">系統名稱 <span style="color:#E53E3E">*</span></label>
+        <input class="stu-modal-input" id="sc-name" placeholder="例：每月工作填報系統" autocomplete="off">
+        <label style="font-size:13px;color:#555;margin-top:4px">網址（含 https://）</label>
+        <input class="stu-modal-input" id="sc-url" placeholder="https://..." autocomplete="off">
+        <label style="font-size:13px;color:#555;margin-top:4px">網址顯示文字</label>
+        <input class="stu-modal-input" id="sc-label" placeholder="例：forms.ntpu.edu.tw" autocomplete="off">
+        <label style="font-size:13px;color:#555;margin-top:4px">帳號</label>
+        <input class="stu-modal-input" id="sc-acct" placeholder="例：學號" autocomplete="off">
+        <label style="font-size:13px;color:#555;margin-top:4px">密碼</label>
+        <input class="stu-modal-input" id="sc-pw" placeholder="例：請向 RA 取得" autocomplete="off">
+        <label style="font-size:13px;color:#555;margin-top:4px">備注</label>
+        <input class="stu-modal-input" id="sc-note" placeholder="選填" autocomplete="off">
+      </div>
+      <div class="add-dialog-actions">
+        <button id="add-cancel" class="edit-btn">取消</button>
+        <button id="add-confirm" class="edit-btn saving">新增</button>
+      </div>
+    </div>`;
+  document.documentElement.appendChild(dialog);
+
+  // 切換顯示欄位
+  const typeSelect = document.getElementById('add-type');
+  const textFields = document.getElementById('add-text-fields');
+  const sysFields  = document.getElementById('add-sys-fields');
+  function toggleFields() {
+    const isSys = typeSelect.value === 'sys-card';
+    textFields.style.display = isSys ? 'none' : '';
+    sysFields.style.display  = isSys ? 'flex' : 'none';
+  }
+  typeSelect.addEventListener('change', toggleFields);
+  // fix: initial state (both divs have inline display:none;display:flex trick — reset properly)
+  sysFields.style.display = 'none';
+
+  document.getElementById('add-cancel').onclick = () => dialog.remove();
+  document.getElementById('add-confirm').onclick = () => {
+    const type = typeSelect.value;
+
+    // ── 系統卡片 ──────────────────────────────────────
+    if (type === 'sys-card') {
+      const name = document.getElementById('sc-name').value.trim();
+      if (!name) { document.getElementById('sc-name').style.borderColor = '#E53E3E'; document.getElementById('sc-name').focus(); return; }
+      const url      = document.getElementById('sc-url').value.trim();
+      const urlLabel = document.getElementById('sc-label').value.trim();
+      const acct     = document.getElementById('sc-acct').value.trim();
+      const pw       = document.getElementById('sc-pw').value.trim();
+      const note     = document.getElementById('sc-note').value.trim();
+
+      const card = document.createElement('div');
+      card.className = 'sys';
+      card.innerHTML =
+        `<div class="sys-name">${name}</div>` +
+        (url ? `<div class="sys-row">網址：<a href="${url}" target="_blank" rel="noopener">${urlLabel || url}</a></div>` : '') +
+        (acct ? `<div class="sys-row">帳號：<span>${acct}</span></div>` : '') +
+        (pw   ? `<div class="sys-row">密碼：<span>${pw}</span></div>` : '') +
+        (note ? `<div class="sys-row">備注：<span>${note}</span></div>` : '');
+
+      // Insert before the edit-toolbar's parent (.section-title), i.e. append inside section
+      section.appendChild(card);
+
+      const edits = loadEdits();
+      edits[section.id] = cleanHTML(section);
+      saveEdits(edits);
+      dialog.remove();
+      showToast('已新增系統卡片！', 'ok');
+      return;
+    }
+
+    // ── 其他類型 ──────────────────────────────────────
+    const text = document.getElementById('add-content').value.trim();
+    if (!text) { showToast('請輸入內容', 'warn'); return; }
+
+    let node;
+    if (type === 'p') {
+      node = document.createElement('p'); node.textContent = text;
+    } else if (type === 'h3') {
+      node = document.createElement('h3'); node.textContent = text;
+    } else if (type === 'li-ul') {
+      const ul = section.querySelector('ul:not(.checklist)') || (() => {
+        const u = document.createElement('ul'); section.appendChild(u); return u;
+      })();
+      const li = document.createElement('li'); li.textContent = text;
+      ul.appendChild(li);
+      node = null;
+    } else if (type === 'tip') {
+      node = document.createElement('div');
+      node.className = 'tip';
+      node.innerHTML = `<i class="ti ti-info-circle"></i><div>⚠️${text}</div>`;
+    } else if (type === 'warn') {
+      node = document.createElement('div');
+      node.className = 'warn';
+      node.innerHTML = `<i class="ti ti-alert-circle"></i><div><strong>⚠️ 注意</strong>：${text}</div>`;
+    } else if (type === 'alert') {
+      node = document.createElement('div');
+      node.className = 'alert';
+      node.innerHTML = `<i class="ti ti-alert-triangle"></i><div><strong>🔴 注意事項</strong>：${text}</div>`;
+    }
+    if (node) section.appendChild(node);
+
+    const edits = loadEdits();
+    edits[section.id] = cleanHTML(section);
+    saveEdits(edits);
+
+    dialog.remove();
+    showToast('已新增並儲存！', 'ok');
+  };
+}
+
+// ─── Ribbon (Word-style toolbar) ──────────────────────────────
+(function setupRibbon() {
+  const ribbon  = document.getElementById('ribbon');
+  const hint    = document.getElementById('ribbon-hint');
+
+  // ── Color palette (文字顏色) ─────────────────────────────────
+  const FG_COLORS = [
+    '#1A1A1A','#ffffff','#888888',
+    '#E53E3E','#C53030','#FEB2B2',
+    '#D97706','#B45309','#FDE68A',
+    '#2E7D5B','#276749','#C6F6D5',
+    '#1D6FA4','#1E4E8C','#BEE3F8',
+    '#6B21A8','#553C9A','#E9D8FD',
+    '#BE185D','#831843','#FCE7F3',
+    '#000000',
+  ];
+
+  function buildGrid(gridEl, colors, applyFn) {
+    colors.forEach(c => {
+      const sw = document.createElement('button');
+      sw.className = 'cp-swatch';
+      sw.style.background = c;
+      if (c === '#ffffff') sw.style.border = '1px solid #CCC';
+      sw.title = c;
+      sw.addEventListener('mousedown', e => { e.preventDefault(); applyFn(c); });
+      gridEl.appendChild(sw);
+    });
+  }
+
+  // Current selected color
+  let curFg = '#1A1A1A';
+
+  function applyFg(color) {
+    curFg = color;
+    const swatch = document.getElementById('fg-swatch');
+    const icon   = document.querySelector('#rb-fg .cb-icon');
+    if (swatch) swatch.style.background = color;
+    if (icon)   icon.style.color = color === '#ffffff' ? '#555' : color;
+    document.getElementById('popup-fg').classList.remove('open');
+    // Only apply if there is an actual text selection (avoid inserting blank span)
+    if (!savedRange || savedRange.collapsed) return;
+    restoreAndExec(() => document.execCommand('foreColor', false, color));
+  }
+
+  buildGrid(document.getElementById('fg-grid'), FG_COLORS, applyFg);
+
+  document.getElementById('fg-custom').addEventListener('change', function() { applyFg(this.value); });
+
+  // Toggle color popup — position with fixed coords so ribbon overflow never clips it
+  function positionPopup(popupEl, anchorEl) {
+    const r = anchorEl.getBoundingClientRect();
+    popupEl.style.top  = (r.bottom + 4) + 'px';
+    popupEl.style.left = r.left + 'px';
+  }
+  document.getElementById('rb-fg').addEventListener('mousedown', e => {
+    e.preventDefault();
+    saveSelection();
+    const popup = document.getElementById('popup-fg');
+    const isOpen = popup.classList.contains('open');
+    popup.classList.remove('open');
+    if (!isOpen) {
+      positionPopup(popup, document.getElementById('rb-fg'));
+      popup.classList.add('open');
+    }
+  });
+  document.addEventListener('mousedown', e => {
+    if (!e.target.closest('#wrap-fg')) {
+      document.getElementById('popup-fg').classList.remove('open');
+    }
+  });
+
+  // ── Saved selection ─────────────────────────────────────────
+  let savedRange = null;
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreSelection() {
+    if (!savedRange) return;
+    // Focus the element that contains the saved range so execCommand works
+    try {
+      const container = savedRange.commonAncestorContainer;
+      const el = container.nodeType === 3 ? container.parentElement : container;
+      const editable = el.closest('[contenteditable="true"]');
+      if (editable) editable.focus();
+    } catch {}
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+  function restoreAndExec(fn) {
+    restoreSelection();
+    fn();
+    updateButtonStates();
+    autoSaveSection();
+  }
+
+  // Save selection whenever user interacts inside an editable
+  document.addEventListener('mouseup', () => {
+    if (isInEditable()) { saveSelection(); updateButtonStates(); }
+  });
+  document.addEventListener('keyup', () => {
+    if (isInEditable()) { saveSelection(); updateButtonStates(); }
+  });
+
+  function isInEditable() {
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode) return false;
+    const el = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
+    return !!el.closest('[contenteditable="true"]');
+  }
+
+  // ── Button state sync (bold/italic/underline active) ────────
+  function updateButtonStates() {
+    ['bold','italic','underline','strikeThrough'].forEach(cmd => {
+      const id = {bold:'rb-bold',italic:'rb-italic',underline:'rb-underline',strikeThrough:'rb-strike'}[cmd];
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+    });
+  }
+
+  // ── Style buttons ───────────────────────────────────────────
+  [
+    ['rb-bold',      () => document.execCommand('bold',          false, null)],
+    ['rb-italic',    () => document.execCommand('italic',        false, null)],
+    ['rb-underline', () => document.execCommand('underline',     false, null)],
+    ['rb-strike',    () => document.execCommand('strikeThrough', false, null)],
+  ].forEach(([id, fn]) => {
+    document.getElementById(id).addEventListener('mousedown', e => {
+      e.preventDefault();
+      restoreAndExec(fn);
+    });
+  });
+
+  // ── Alignment — set textAlign on the nearest block element ──
+  function applyAlign(align) {
+    restoreSelection();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const node = sel.anchorNode;
+    const el = node ? (node.nodeType === 3 ? node.parentElement : node) : null;
+    if (!el) return;
+    // Walk up to find the block-level editable element
+    const block = el.closest('p, h3, li, .step-title, .step-desc, .sys-name, .sys-row, [contenteditable="true"]');
+    if (block) { block.style.textAlign = align; autoSaveSection(); }
+  }
+  document.getElementById('rb-left').addEventListener('mousedown',   e => { e.preventDefault(); saveSelection(); applyAlign('left');   });
+  document.getElementById('rb-center').addEventListener('mousedown', e => { e.preventDefault(); saveSelection(); applyAlign('center'); });
+  document.getElementById('rb-right').addEventListener('mousedown',  e => { e.preventDefault(); saveSelection(); applyAlign('right');  });
+
+  // ── Font size ───────────────────────────────────────────────
+  document.getElementById('rb-size').addEventListener('mousedown', saveSelection);
+  document.getElementById('rb-size').addEventListener('change', function() {
+    const size = this.value; this.value = '';
+    if (!size) return;
+    restoreSelection();
+    wrapSpan({ fontSize: size });
+    updateButtonStates();
+    autoSaveSection();
+  });
+
+  function wrapSpan(styles) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const span  = document.createElement('span');
+    Object.assign(span.style, styles);
+    try { range.surroundContents(span); }
+    catch {
+      const frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+    }
+  }
+
+  // ── Clear format ────────────────────────────────────────────
+  document.getElementById('rb-clear').addEventListener('mousedown', e => {
+    e.preventDefault();
+    restoreAndExec(() => {
+      document.execCommand('removeFormat', false, null);
+      // strip leftover spans
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (range.isCollapsed) return;
+      const frag = range.cloneContents();
+      const tmp  = document.createElement('div');
+      tmp.appendChild(frag);
+      const plain = tmp.textContent;
+      range.deleteContents();
+      range.insertNode(document.createTextNode(plain));
+    });
+  });
+
+  // ── Enable / disable ribbon when editing state changes ──────
+  window.setRibbonEnabled = function(enabled) {
+    ribbon.classList.toggle('ribbon-disabled', !enabled);
+    hint.style.display = enabled ? 'none' : '';
+  };
+
+  // ── Auto-save helper ────────────────────────────────────────
+  function autoSaveSection() {
+    const sel = window.getSelection();
+    const node = sel && sel.anchorNode;
+    if (!node) return;
+    const el = node.nodeType === 3 ? node.parentElement : node;
+    // If cursor is inside the TOC, save TOC instead of a section
+    if (el.closest('#toc')) {
+      if (window._tocSaveFn) window._tocSaveFn();
+      return;
+    }
+    const section = el.closest('.section');
+    if (!section || !section.id) return;
+    const edits = loadEdits();
+    edits[section.id] = cleanHTML(section);
+    saveEdits(edits);
+  }
+})();
+
+// ─── Custom modal (replaces browser prompt/confirm) ──────────
+function showModal(opts) {
+  document.querySelectorAll('.stu-modal-overlay').forEach(m => m.remove());
+  const overlay = document.createElement('div');
+  overlay.className = 'stu-modal-overlay';
+  const isPrompt = !!opts.inputLabel;
+  overlay.innerHTML = `
+    <div class="stu-modal">
+      <div class="stu-modal-title">${opts.title || ''}</div>
+      ${isPrompt ? `<label class="stu-modal-label">${opts.inputLabel}</label>
+        <input class="stu-modal-input" type="text" placeholder="${opts.inputPlaceholder || ''}" value="${opts.inputDefault || ''}" autocomplete="off">` : ''}
+      <div class="stu-modal-actions">
+        <button class="stu-modal-cancel">${opts.cancelLabel || '取消'}</button>
+        <button class="stu-modal-confirm">${opts.confirmLabel || '確定'}</button>
+      </div>
+    </div>`;
+  document.documentElement.appendChild(overlay);
+  const inp = overlay.querySelector('.stu-modal-input');
+  if (inp) { setTimeout(() => { inp.focus(); inp.select(); }, 30); }
+  overlay.querySelector('.stu-modal-confirm').addEventListener('click', () => {
+    const val = inp ? inp.value.trim() : null;
+    overlay.remove();
+    opts.onConfirm && opts.onConfirm(val);
+  });
+  overlay.querySelector('.stu-modal-cancel').addEventListener('click', () => {
+    overlay.remove();
+    opts.onCancel && opts.onCancel();
+  });
+  if (inp) {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') overlay.querySelector('.stu-modal-confirm').click();
+      if (e.key === 'Escape') overlay.querySelector('.stu-modal-cancel').click();
+    });
+  }
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.querySelector('.stu-modal-cancel').click(); });
+}
+
+// ─── Toast ────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
+  document.querySelectorAll('.guide-toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'guide-toast toast-' + type;
+  t.textContent = msg;
+  document.documentElement.appendChild(t);
+  setTimeout(() => t.style.opacity = '0', 2000);
+  setTimeout(() => t.remove(), 2400);
+}
+
+// ─── Extra System Cards (s-sys) ───────────────────────────────
+(function() {
+  const STORE = 'clab_sys_cards_v1';
+  const container = document.getElementById('sys-extra-cards');
+  const addBtn    = document.getElementById('sys-add-btn');
+  if (!container || !addBtn) return;
+
+  function save(cards) {
+    _sysCache = cards;
+    FB.save('sys_cards', cards);
+  }
+  function load() {
+    return _sysCache || [];
+  }
+
+  function makeCard(card, idx, cards) {
+    const div = document.createElement('div');
+    div.className = 'sys sys-dynamic';
+    div.dataset.idx = idx;
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'sys-name';
+    nameRow.textContent = card.name;
+
+    const urlRow = document.createElement('div');
+    urlRow.className = 'sys-row';
+    if (card.url) {
+      urlRow.innerHTML = `網址：<a href="${card.url}" target="_blank">${card.urlLabel || card.url}</a>`;
+    }
+
+    const acctRow = document.createElement('div');
+    acctRow.className = 'sys-row';
+    acctRow.innerHTML = `帳號：<span>${card.account || '—'}</span>`;
+
+    const pwRow = document.createElement('div');
+    pwRow.className = 'sys-row';
+    pwRow.innerHTML = `密碼：<span>${card.password || '—'}</span>`;
+
+    const noteRow = document.createElement('div');
+    if (card.note) {
+      noteRow.className = 'sys-row';
+      noteRow.innerHTML = `備注：<span>${card.note}</span>`;
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'sys-card-del';
+    delBtn.textContent = '✕';
+    delBtn.title = '刪除此系統卡';
+    delBtn.addEventListener('click', () => {
+      showModal({
+        title: `刪除「${card.name}」？`,
+        confirmLabel: '刪除', cancelLabel: '取消',
+        onConfirm: () => {
+          cards.splice(idx, 1);
+          save(cards);
+          renderAll(cards);
+          showToast('已刪除');
+        }
+      });
+    });
+
+    div.appendChild(delBtn);
+    div.appendChild(nameRow);
+    if (card.url) div.appendChild(urlRow);
+    div.appendChild(acctRow);
+    div.appendChild(pwRow);
+    if (card.note) div.appendChild(noteRow);
+    return div;
+  }
+
+  function renderAll(cards) {
+    container.innerHTML = '';
+    cards.forEach((card, idx) => container.appendChild(makeCard(card, idx, cards)));
+  }
+
+  addBtn.addEventListener('click', () => {
+    // Custom multi-field modal
+    document.querySelectorAll('.stu-modal-overlay').forEach(m => m.remove());
+    const overlay = document.createElement('div');
+    overlay.className = 'stu-modal-overlay';
+    overlay.innerHTML = `
+      <div class="stu-modal" style="min-width:340px">
+        <div class="stu-modal-title">新增系統帳號</div>
+        <label class="stu-modal-label">系統名稱 <span style="color:#E53E3E">*</span></label>
+        <input class="stu-modal-input" id="sysf-name" placeholder="例：會計請購系統" autocomplete="off">
+        <label class="stu-modal-label" style="margin-top:8px">網址（含 https://）</label>
+        <input class="stu-modal-input" id="sysf-url" placeholder="https://..." autocomplete="off">
+        <label class="stu-modal-label" style="margin-top:8px">網址顯示文字</label>
+        <input class="stu-modal-input" id="sysf-label" placeholder="例：purchase.ntpu.edu.tw" autocomplete="off">
+        <label class="stu-modal-label" style="margin-top:8px">帳號</label>
+        <input class="stu-modal-input" id="sysf-acct" placeholder="例：身分證字號" autocomplete="off">
+        <label class="stu-modal-label" style="margin-top:8px">密碼</label>
+        <input class="stu-modal-input" id="sysf-pw" placeholder="例：請向 RA 取得" autocomplete="off">
+        <label class="stu-modal-label" style="margin-top:8px">備注</label>
+        <input class="stu-modal-input" id="sysf-note" placeholder="選填" autocomplete="off">
+        <div class="stu-modal-actions">
+          <button class="stu-modal-cancel">取消</button>
+          <button class="stu-modal-confirm">新增</button>
+        </div>
+      </div>`;
+    document.documentElement.appendChild(overlay);
+    const nameInp = overlay.querySelector('#sysf-name');
+    setTimeout(() => nameInp.focus(), 30);
+    overlay.querySelector('.stu-modal-cancel').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.stu-modal-confirm').addEventListener('click', () => {
+      const name = overlay.querySelector('#sysf-name').value.trim();
+      if (!name) { nameInp.style.borderColor = '#E53E3E'; nameInp.focus(); return; }
+      const card = {
+        name,
+        url:      overlay.querySelector('#sysf-url').value.trim(),
+        urlLabel: overlay.querySelector('#sysf-label').value.trim(),
+        account:  overlay.querySelector('#sysf-acct').value.trim(),
+        password: overlay.querySelector('#sysf-pw').value.trim(),
+        note:     overlay.querySelector('#sysf-note').value.trim(),
+      };
+      overlay.remove();
+      const cards = load();
+      cards.push(card);
+      save(cards);
+      renderAll(cards);
+      showToast('已新增「' + name + '」');
+    });
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  });
+
+  window._renderSysCards = renderAll;
+  // 初始載入
+  FB.load('sys_cards', []).then(cards => {
+    _sysCache = cards;
+    renderAll(cards);
+  });
+})();
+
+// ─── Student Roster (fully custom columns) ──────────────────────
+(function() {
+  const STORE     = 'clab_students_v1';
+  const theadRow  = document.getElementById('student-thead-row');
+  const tbody     = document.getElementById('student-tbody');
+  const addRow    = document.getElementById('stu-add-row');
+  const emptyHint = document.getElementById('stu-empty-hint');
+  if (!theadRow || !tbody || !addRow) return;
+
+  let cols = [];
+  let rows = [];
+
+  // ── Persistence ──
+  function save() {
+    const data = { cols, rows };
+    _stuCache = data;
+    FB.save('students', data);
+  }
+  function load() {
+    return _stuCache || null;
+  }
+
+  // ── Render ──
+  function renderAll() { renderThead(); renderTbody(); renderAddRow(); updateEmptyHint(); }
+
+  function updateEmptyHint() {
+    if (emptyHint) emptyHint.style.display = cols.length === 0 ? 'block' : 'none';
+    if (addRow)    addRow.style.display     = cols.length > 0  ? 'flex'  : 'none';
+  }
+
+  function renderThead() {
+    theadRow.innerHTML = '';
+    cols.forEach((col, ci) => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      th.title = '雙擊可改名';
+      th.style.cursor = 'pointer';
+      th.addEventListener('dblclick', () => {
+        showModal({
+          title: '修改欄位名稱',
+          inputLabel: '新欄位名稱',
+          inputPlaceholder: '例：學年度、姓名、Email',
+          inputDefault: cols[ci],
+          confirmLabel: '儲存', cancelLabel: '取消',
+          onConfirm: val => {
+            if (!val || val === cols[ci]) return;
+            cols[ci] = val;
+            th.textContent = val;
+            th.title = '雙擊可改名';
+            // update placeholder in add-row inputs
+            const inp = addRow.querySelectorAll('input')[ci];
+            if (inp) inp.placeholder = val;
+            save();
+            showToast('已更新欄位名稱「' + val + '」');
+          }
+        });
+      });
+      theadRow.appendChild(th);
+    });
+    const thAct = document.createElement('th');
+    thAct.style.width = '36px';
+    theadRow.appendChild(thAct);
+  }
+
+  function makeRowEl(rowData) {
+    const tr = document.createElement('tr');
+    cols.forEach((col, ci) => {
+      const td = document.createElement('td');
+      td.textContent = rowData[ci] || '';
+      td.contentEditable = 'true';
+      td.className = 'stu-cell';
+      td.addEventListener('blur', () => {
+        const ri = [...tbody.querySelectorAll('tr')].indexOf(tr);
+        if (ri >= 0) { if (!rows[ri]) rows[ri] = []; rows[ri][ci] = td.textContent.trim(); save(); }
+      });
+      td.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); td.blur(); } });
+      tr.appendChild(td);
+    });
+    const tdAct = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-row-btn';
+    delBtn.textContent = '✕';
+    delBtn.title = '刪除此列';
+    tdAct.appendChild(delBtn);
+    tr.appendChild(tdAct);
+    return tr;
+  }
+
+  function renderTbody() {
+    tbody.innerHTML = '';
+    rows.forEach(rowData => tbody.appendChild(makeRowEl(rowData)));
+  }
+
+  function renderAddRow() {
+    const addBtn = document.getElementById('stu-add-btn');
+    [...addRow.querySelectorAll('input')].forEach(i => i.remove());
+    cols.forEach((col, i) => {
+      const inp = document.createElement('input');
+      inp.placeholder = col;
+      inp.dataset.ci = i;
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter' && addBtn) addBtn.click(); });
+      addRow.insertBefore(inp, addBtn);
+    });
+  }
+
+  // ── Delete row (event delegation on tbody) ──
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('.del-row-btn');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    const ri = [...tbody.querySelectorAll('tr')].indexOf(tr);
+    const label = rows[ri]?.[0] || '此列';
+    showModal({
+      title: `刪除「${label}」的資料？`,
+      confirmLabel: '刪除', cancelLabel: '取消',
+      onConfirm: () => { rows.splice(ri, 1); tr.remove(); save(); showToast('已刪除一列'); }
+    });
+  });
+
+  // ── Add column ──
+  document.getElementById('stu-add-col-btn').addEventListener('click', () => {
+    showModal({
+      title: '新增欄位',
+      inputLabel: '欄位名稱',
+      inputPlaceholder: '例：學年度、姓名、Email、備注',
+      confirmLabel: '新增', cancelLabel: '取消',
+      onConfirm: val => {
+        if (!val) return;
+        cols.push(val);
+        rows.forEach(r => r.push(''));
+        save(); renderAll();
+        showToast('已新增欄位「' + val + '」');
+      }
+    });
+  });
+
+  // ── Delete selected column ──
+  document.getElementById('stu-del-col-btn').addEventListener('click', () => {
+    if (cols.length === 0) { showToast('目前沒有欄位可刪除', 'warn'); return; }
+    // Build picker modal with radio-style buttons for each column
+    document.querySelectorAll('.stu-modal-overlay').forEach(m => m.remove());
+    const overlay = document.createElement('div');
+    overlay.className = 'stu-modal-overlay';
+    const colOptions = cols.map((c, i) =>
+      `<label class="stu-col-pick-label"><input type="radio" name="delcol" value="${i}" ${i === cols.length-1 ? 'checked' : ''}><span>${c}</span></label>`
+    ).join('');
+    overlay.innerHTML = `
+      <div class="stu-modal">
+        <div class="stu-modal-title">選擇要刪除的欄位</div>
+        <div class="stu-col-pick-list">${colOptions}</div>
+        <div class="stu-modal-actions">
+          <button class="stu-modal-cancel">取消</button>
+          <button class="stu-modal-confirm" style="background:#C53030">刪除</button>
+        </div>
+      </div>`;
+    document.documentElement.appendChild(overlay);
+    overlay.querySelector('.stu-modal-cancel').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.stu-modal-confirm').addEventListener('click', () => {
+      const sel = overlay.querySelector('input[name="delcol"]:checked');
+      if (!sel) { overlay.remove(); return; }
+      const ci = parseInt(sel.value);
+      const name = cols[ci];
+      overlay.remove();
+      cols.splice(ci, 1);
+      rows.forEach(r => r.splice(ci, 1));
+      save(); renderAll();
+      showToast('已刪除欄位「' + name + '」');
+    });
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  });
+
+  // ── Add row ──
+  const addBtn = document.getElementById('stu-add-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      const inputs = [...addRow.querySelectorAll('input')];
+      if (inputs.length === 0) { showToast('請先新增欄位', 'warn'); return; }
+      const values = inputs.map(i => i.value.trim());
+      if (values.every(v => !v)) { showToast('請至少填寫一格資料', 'warn'); return; }
+      rows.push(values);
+      tbody.appendChild(makeRowEl(values));
+      inputs.forEach(i => i.value = '');
+      inputs[0]?.focus();
+      save();
+      showToast('已新增一列');
+    });
+  }
+
+  // ── 匯出 CSV ──
+  const exportBtn = document.getElementById('stu-export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      if (cols.length === 0) { showToast('尚無欄位可匯出', 'warn'); return; }
+      function csvEsc(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
+      const lines = [cols.map(csvEsc).join(',')];
+      rows.forEach(r => lines.push(cols.map((_, i) => csvEsc(r[i] || '')).join(',')));
+      const a = document.createElement('a');
+      const csvBlob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+      a.href = URL.createObjectURL(csvBlob);
+      a.download = 'Clab歷屆助理名單.csv';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      showToast('已匯出 CSV');
+    });
+  }
+
+  // ── 匯入 CSV ──
+  const importInput = document.getElementById('stu-import-input');
+  if (importInput) {
+    importInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const text = ev.target.result.replace(/^﻿/, '');
+          const lines = text.split(/\r?\n/).filter(l => l.trim());
+          if (lines.length < 1) { showToast('CSV 格式錯誤', 'warn'); return; }
+          function parseCSV(line) {
+            const res = []; let cur = '', inQ = false;
+            for (let i = 0; i < line.length; i++) {
+              const c = line[i];
+              if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+              else if (c === ',' && !inQ) { res.push(cur); cur = ''; }
+              else cur += c;
+            }
+            res.push(cur); return res;
+          }
+          cols = parseCSV(lines[0]);
+          rows = lines.slice(1).map(l => {
+            const r = parseCSV(l);
+            while (r.length < cols.length) r.push('');
+            return r.slice(0, cols.length);
+          });
+          save(); renderAll();
+          showToast(`已匯入 ${rows.length} 筆資料`);
+        } catch(err) { showToast('匯入失敗：' + err.message, 'warn'); }
+        this.value = '';
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
+
+  // ── 供 realtime listener 呼叫 ──
+  window._renderStudents = function(data) {
+    if (!data || !Array.isArray(data.cols)) return;
+    cols = data.cols;
+    rows = (data.rows || []).map(r => Array.isArray(r) ? r : [r.yr||'', r.name||'', r.email||'', ...(r.extra||[])]);
+    renderAll();
+  };
+
+  // ── Init ──
+  FB.load('students', null).then(saved => {
+    _stuCache = saved;
+    if (saved && Array.isArray(saved.cols)) {
+      cols = saved.cols;
+      rows = (saved.rows || []).map(r => {
+        if (Array.isArray(r)) return r;
+        return [r.yr||'', r.name||'', r.email||'', ...(r.extra||[])];
+      });
+    }
+    renderAll();
+  });
+})();
+
+// ─── initApp：登入後呼叫，載入所有資料 ────────────────────────
+async function initApp() {
+  await applyStored();       // 載入內文 + TOC（Firebase）
+  setupRealtime();           // 開啟 real-time listeners
+  if (window._initSectionDisplay) window._initSectionDisplay();
+
+  // 更改密碼按鈕
+  const changePwBtn = document.getElementById('change-pw-btn');
+  if (changePwBtn) {
+    changePwBtn.addEventListener('click', () => {
+      showModal({
+        title: '更改密碼',
+        inputLabel: '新密碼',
+        inputPlaceholder: '請輸入新密碼',
+        confirmLabel: '儲存', cancelLabel: '取消',
+        onConfirm: async (val) => {
+          if (!val || val.length < 4) { showToast('密碼至少需要 4 個字元', 'warn'); return; }
+          await fbSet('config/password', { value: val });
+          showToast('密碼已更新！', 'ok');
+        }
+      });
+    });
+  }
+}
+
+// ─── Mobile TOC toggle ────────────────────────────────────────
+(function() {
+  const menuBtn = document.getElementById('mob-menu-btn');
+  const toc = document.getElementById('toc');
+  const overlay = document.getElementById('toc-overlay');
+  if (!menuBtn || !toc || !overlay) return;
+
+  function openToc() {
+    toc.classList.add('mob-open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeToc() {
+    toc.classList.remove('mob-open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  menuBtn.addEventListener('click', openToc);
+  overlay.addEventListener('click', closeToc);
+
+  // Close TOC when a TOC item is tapped on mobile
+  toc.addEventListener('click', e => {
+    const link = e.target.closest('.toc-item');
+    if (link && window.innerWidth <= 680) {
+      closeToc();
+    }
+  });
+
+  // Close on orientation change / resize to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 680) closeToc();
+  });
+})();
+</script>
+
+<style>
+/* Edit toolbar */
+.section-title{position:relative}
+.edit-toolbar{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+.edit-btn{font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid #D5D5D5;background:#fff;color:#444;cursor:pointer;font-family:inherit;transition:background .15s}
+.edit-btn:hover{background:#F0F0F0}
+.edit-btn.saving{background:#EF9F27;color:#fff;border-color:#EF9F27}
+.edit-btn.saving:hover{background:#D98F20}
+.edit-btn.add-btn{background:#F0F7FF;border-color:#B8D4F0;color:#1D6FA4}
+.edit-btn.add-btn:hover{background:#DCF0FF}
+.edit-btn.cancel-btn{background:#FFF5F5;border-color:#F9BABA;color:#C53030}
+.edit-btn.cancel-btn:hover{background:#FFE5E5}
+/* Editable highlight */
+.editable-active{outline:2px dashed #EF9F2799;border-radius:3px;background:#FFFDF5;min-height:1.2em}
+/* Section title text span */
+.title-text{display:inline}
+.section-title .title-text.editable-active{padding:1px 4px;cursor:text}
+/* Delete button */
+.del-btn{position:absolute;top:2px;right:4px;width:20px;height:20px;border-radius:50%;border:none;background:#E53E3E;color:#fff;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;opacity:.75;transition:opacity .15s;z-index:10;padding:0}
+.del-btn:hover{opacity:1;background:#C53030}
+/* Add dialog */
+.add-dialog{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2147483640;display:flex;align-items:center;justify-content:center}
+.add-dialog-inner{background:#fff;border-radius:12px;padding:24px;width:420px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.add-dialog-title{font-size:14px;font-weight:600;margin-bottom:14px;color:#1A1A1A}
+.add-dialog-inner label{font-size:13px;color:#555;display:block;margin-bottom:4px;margin-top:10px}
+.add-dialog-inner select,.add-dialog-inner textarea{width:100%;border:1px solid #D5D5D5;border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none}
+.add-dialog-inner textarea{resize:vertical}
+.add-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+/* Toast */
+.guide-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:opacity .4s;z-index:2147483646}
+.toast-ok{background:#2E7D5B;color:#fff}
+.toast-info{background:#1D6FA4;color:#fff}
+.toast-warn{background:#BA7517;color:#fff}
+
+/* (floating fmt-bar removed — replaced by ribbon) */
+
+/* Student roster — toolbar */
+.stu-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.stu-toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stu-toolbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stu-csv-btn{font-size:12px;padding:4px 11px;border-radius:6px;border:1px solid #D0D0D0;background:#FAFAFA;color:#444;cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.stu-csv-btn:hover{background:#F0F0F0;border-color:#AAA}
+.stu-import-label{display:inline-flex;align-items:center;cursor:pointer}
+.stu-btn{font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #B8D4F0;background:#EFF7FF;color:#1D6FA4;cursor:pointer;font-family:inherit;font-weight:500;transition:background .15s,border-color .15s;white-space:nowrap}
+.stu-btn:hover{background:#DCF0FF;border-color:#7AAFE8}
+.stu-btn-del-col{border-color:#F0CCCC;background:#FFF4F4;color:#B94040}
+.stu-btn-del-col:hover{background:#FFE8E8;border-color:#E88A8A}
+.stu-cell{outline:none;min-width:60px}
+.stu-cell:focus{background:#FFFEF0;outline:1px solid #EFD96A}
+.del-row-btn{background:none;border:none;color:#CCC;font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .1s,background .1s;line-height:1}
+.del-row-btn:hover{color:#E53E3E;background:#FFEAEA}
+.stu-add-row{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.stu-add-row input{font-size:13px;padding:4px 8px;border:1px solid #D0D0D0;border-radius:5px;font-family:inherit;min-width:80px;flex:1}
+.stu-add-row input:focus{outline:none;border-color:#90BFEF;background:#FAFEFF}
+.stu-add-btn{font-size:12px;padding:4px 14px;border-radius:6px;border:1px solid #AADAAA;background:#F2FBF2;color:#2E7D32;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap;flex-shrink:0}
+.stu-add-btn:hover{background:#E3F5E3;border-color:#76C776}
+.extra-input{min-width:80px;max-width:140px}
+
+/* Custom modal (replaces browser prompt/confirm) */
+.stu-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2147483647;display:flex;align-items:center;justify-content:center}
+.stu-modal{background:#fff;border-radius:12px;padding:24px 28px;min-width:300px;max-width:90vw;box-shadow:0 8px 40px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:10px}
+.stu-modal-title{font-size:15px;font-weight:600;color:#1A1A1A}
+.stu-modal-label{font-size:13px;color:#555}
+.stu-modal-input{border:1px solid #C8C8C8;border-radius:7px;padding:8px 11px;font-size:14px;font-family:inherit;outline:none;width:100%}
+.stu-modal-input:focus{border-color:#6AABF0;box-shadow:0 0 0 2px rgba(106,171,240,.2)}
+.stu-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.stu-modal-cancel{font-size:13px;padding:6px 16px;border-radius:7px;border:1px solid #D0D0D0;background:#F5F5F5;color:#555;cursor:pointer;font-family:inherit}
+.stu-modal-cancel:hover{background:#E8E8E8}
+.stu-modal-confirm{font-size:13px;padding:6px 16px;border-radius:7px;border:none;background:#3B82C4;color:#fff;cursor:pointer;font-family:inherit;font-weight:500}
+.stu-modal-confirm:hover{background:#2A6FAF}
+.stu-col-pick-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding:2px 0}
+.stu-col-pick-label{display:flex;align-items:center;gap:8px;font-size:13px;color:#333;padding:6px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;transition:background .12s}
+.stu-col-pick-label:hover{background:#F0F5FF;border-color:#C8DAFA}
+.stu-col-pick-label input[type=radio]{accent-color:#3B82C4;width:15px;height:15px;flex-shrink:0}
+/* Extra system cards */
+.sys-add-btn{margin-top:10px;font-size:13px;padding:6px 16px;border-radius:7px;border:1px dashed #B8D4F0;background:#F0F7FF;color:#1D6FA4;cursor:pointer;font-family:inherit;font-weight:500;transition:background .15s}
+.sys-add-btn:hover{background:#DCF0FF;border-color:#7AAFE8}
+.sys-dynamic{position:relative}
+.sys-card-del{position:absolute;top:8px;right:8px;background:none;border:none;color:#CCC;font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px;line-height:1;transition:color .1s,background .1s}
+.sys-card-del:hover{color:#E53E3E;background:#FFEAEA}
+</style>
+</body>
+</html>
